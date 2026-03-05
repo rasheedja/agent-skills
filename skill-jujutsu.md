@@ -113,7 +113,36 @@ jj abandon @
 
 ---
 
-## 9. Revsets (for reference)
+## 9. Splitting one change into multiple commits
+
+When you have a single change that you want to turn into **several conventional commits** (e.g. one per package or layer):
+
+1. **Describe the whole change first** so the “remaining” part keeps a message you can overwrite:
+   ```bash
+   jj describe -m "feat(scope): overall summary
+
+   - Bullet one
+   - Bullet two"
+   ```
+
+2. **Split by fileset** — the **selected** paths stay in the original commit; the **remaining** edits go into a new child. Use `-m` for the **first** (selected) commit’s message:
+   ```bash
+   jj split path/to/first/part/ -m "feat(first): first logical commit message"
+   ```
+   After this, `@` is the **remaining** change (the new child). The parent is the commit that now contains only the selected paths.
+
+3. **Re-describe the remaining change** with its own conventional message:
+   ```bash
+   jj describe -m "feat(second): second logical commit message"
+   ```
+
+4. **Repeat** if you want more commits: run `jj split <next_paths> -m "..."` on the current `@`, then describe the new remaining change.
+
+**Example:** One big feature change split into three commits: (1) a new internal package, (2) config and DB layer, (3) service + app + cmd wiring. First split with the new package path; then split again with config and db paths; finally describe the remaining change (service, app, cmd).
+
+---
+
+## 10. Revsets (for reference)
 
 - `@` — current working copy change  
 - `@-` — parent of `@`  
