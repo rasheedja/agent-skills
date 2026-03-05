@@ -2,6 +2,8 @@
 
 This skill covers the **jj** (Jujutsu) CLI commands used in a typical “one commit per PR comment” workflow: creating a new change, moving the branch bookmark, pushing, and getting the commit hash for a PR reply. It does not cover full jj concepts (e.g. conflict resolution, squash, rebase).
 
+For **commit message format** (conventional commits, body with bullets) and **running project checks before committing** (Makefile, npm scripts, CI, etc.), see **skill-commits-and-pre-commit-checks.md**.
+
 **Prerequisites:** Repo is a jj repository (`jj log` works). For pushing, a git remote and `jj git push` (or equivalent) must be configured.
 
 ---

@@ -2,6 +2,8 @@
 
 This repo (**agent-skills**) holds skill documents that agents should use when handling user tasks. Agents are also allowed and encouraged to **improve** these skills: add content, create new skills, and fix or remove incorrect or outdated content. This file explains how to **find** information in skills and how to **update** them (including commit and branch rules).
 
+**When making changes in any git/jj repo** (including this one), use **skill-commits-and-pre-commit-checks.md**: conventional commits, small logical commits, and running the project’s checks (Makefile, npm scripts, CI, etc.) before committing.
+
 **Path to this repo:** `~/Documents/personal/git/agent-skills/` (full path: `/Users/junaid/Documents/personal/git/agent-skills/`).
 
 ---
@@ -102,6 +104,7 @@ Agents may add to, create, correct, or remove content in this repo. Every such c
 
 | Goal | Action |
 |------|--------|
+| Commits in any git/jj repo | Use **skill-commits-and-pre-commit-checks.md**: conventional commits, small commits, run project checks before committing. |
 | Find a skill | List `skill-*.md`; search titles or grep for topic/phrase; follow in-file links. |
 | Add to a skill | Edit the file; add section or example; commit with jj (one commit per logical change). |
 | New skill | Create `skill-<topic>.md` with same structure as others; commit. |
