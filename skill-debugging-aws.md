@@ -46,6 +46,12 @@ So: **ignore "Resource update cancelled"** when looking for what to fix; find th
 - Adding **KinesisStreamSpecification** to a table (native DynamoDB → Kinesis CDC) requires the **Kinesis stream to already exist** in the same account and region. In CloudFormation, use **DependsOn** on the stream so the table is updated only after the stream is created.
 - If the stream name already exists (e.g. left over from a previous rollback), stream **create** will fail; delete the existing stream or use a different name.
 
+### 3.4 DynamoDB — Kinesis streaming destination already enabled
+
+- **Error you’ll see:** `"Table is not in a valid state to enable Kinesis Streaming Destination: EnableKinesisStreamingDestination must be DISABLED or ENABLE_FAILED to perform ENABLE operation."` (UPDATE_FAILED on the table.)
+- **Cause:** The table already has a Kinesis streaming destination in a state other than DISABLED or ENABLE_FAILED (e.g. **ACTIVE**, **ENABLING**, or orphaned after a rollback that deleted the stream). CloudFormation is trying to run “enable” again; DynamoDB only allows enable when the destination is DISABLED or ENABLE_FAILED.
+- **Fix:** No template change needed. **Disable the existing destination** in AWS (console or CLI), then re-run the stack update. Use `describe-kinesis-streaming-destination` to see the current stream ARN and status; use `disable-kinesis-streaming-destination` with that stream ARN and the table name. After the destination is DISABLED, the next deploy can enable the stream defined in code. See **skill-aws-cli.md** §5 for the commands.
+
 ---
 
 ## 4. Quick reference: "deploy failed" checklist
@@ -56,4 +62,5 @@ So: **ignore "Resource update cancelled"** when looking for what to fix; find th
    - Firehose "error prefix" / "Dynamic Partitioning Namespaces" → remove `partitionKeyFromQuery` / `partitionKeyFromLambda` from **ErrorOutputPrefix** (see §3.1).
    - Access denied / KMS → check bucket and key policies in the target account (see §3.2).
    - Resource already exists → delete the conflicting resource or change the name in the template (see §3.3).
-4. **Fix template or policies**, then redeploy.
+   - DynamoDB "not in a valid state to enable Kinesis Streaming Destination" → disable the existing Kinesis destination on the table (see §3.4 and **skill-aws-cli.md** §5), then redeploy.
+4. **Fix template or policies** (or clear the conflicting state in AWS), then redeploy.

@@ -73,3 +73,31 @@ aws cloudformation describe-stack-events \
 1. Run the command in §1.1 with your stack name and region.
 2. Find the row whose **Reason** is **not** "Resource update cancelled" — that’s the root cause.
 3. Use that **Resource** (logical ID) and **Reason** (error message) to fix the template or permissions; see **skill-debugging-aws.md** for common causes and service-specific rules.
+
+---
+
+## 5. DynamoDB Kinesis streaming destination (check / disable)
+
+When a table fails with "not in a valid state to enable Kinesis Streaming Destination", the table already has a destination that must be **DISABLED** before CloudFormation can enable the one in your template.
+
+**Check current destination(s) and status:**
+
+```bash
+aws dynamodb describe-kinesis-streaming-destination \
+  --table-name <TABLE_NAME> \
+  --region <REGION>
+```
+
+- Replace `<TABLE_NAME>` (e.g. `preprod-realfi--supply-2`) and `<REGION>`.
+- Response includes `KinesisDataStreamDestinations` with each `StreamArn` and `DestinationStatus` (e.g. ACTIVE, ENABLING, DISABLED, ENABLE_FAILED).
+
+**Disable a destination (so the stack can enable the stream defined in code):**
+
+```bash
+aws dynamodb disable-kinesis-streaming-destination \
+  --table-name <TABLE_NAME> \
+  --stream-arn <STREAM_ARN> \
+  --region <REGION>
+```
+
+- Use the **StreamArn** from the describe output. After the destination reaches **DISABLED**, re-run the CloudFormation update.
