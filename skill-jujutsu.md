@@ -1,6 +1,6 @@
 # Skill: Jujutsu (jj) — commits, bookmarks, and push for PR workflows
 
-This skill covers the **jj** (Jujutsu) CLI commands used in a typical “one commit per PR comment” workflow: creating a new change, moving the branch bookmark, pushing, and getting the commit hash for a PR reply. It does not cover full jj concepts (e.g. conflict resolution, squash, rebase).
+This skill covers the **jj** (Jujutsu) CLI commands used in a typical “one commit per PR comment” workflow: creating a new change, moving the branch bookmark, pushing, and getting the commit hash for a PR reply. It also covers **resolving merge/rebase conflicts** (§11). It does not cover other advanced jj concepts (e.g. squash, evolutions).
 
 For **commit message format** (conventional commits, body with bullets) and **running project checks before committing** (Makefile, npm scripts, CI, etc.), see **skill-commits-and-pre-commit-checks.md**.
 
@@ -148,3 +148,79 @@ When you have a single change that you want to turn into **several conventional 
 - `@-` — parent of `@`  
 - `<bookmark_name>` — the change the bookmark points at (e.g. `rasheedja/PP12PB-599/store-hashmap-owners`)  
 - `jj log -n 5` — show last 5 changes (graph)
+
+---
+
+## 11. Resolving merge/rebase conflicts
+
+After a rebase or merge, some revisions may be in conflict. Resolve them **from oldest to newest** so that fixing a parent allows jj to rebase descendants and sometimes clear their conflicts too.
+
+### 11.1 Find which revisions have conflicts
+
+```bash
+jj log -n 30
+```
+
+- Revisions with conflicts show **`×`** and **`(conflict)`** next to the change id and description.
+- Clean revisions show **`○`**.
+
+To see which **files** are conflicted in a given revision:
+
+```bash
+jj resolve --list -r <REVSET>
+```
+
+- `<REVSET>` can be the short change id (e.g. `xkopwonn`) or a bookmark. Example: `jj resolve --list -r npmmkmyz`.
+- Output is the list of paths with "2-sided conflict" or "3-sided conflict".
+
+### 11.2 Resolve conflicts one revision at a time
+
+1. **Edit the oldest conflicting revision** (the one closest to the branch base):
+   ```bash
+   jj edit <SHORT_CHANGE_ID>
+   ```
+   The working copy is now that revision. You may see "Rebased N descendant commits onto updated working copy" when the parent was just fixed.
+
+2. **Open the conflicted files** and remove conflict markers, keeping the desired content (see §11.3 for marker formats).
+
+3. **Save and move to the next conflicting revision.** Run `jj log` again; some conflicts may already be gone after the rebase. Then `jj edit <NEXT_CONFLICTING_ID>` and fix any remaining markers in the working copy.
+
+4. **Repeat** until `jj log` shows no `×` or `(conflict)`.
+
+### 11.3 Conflict marker formats
+
+**2-sided conflict** (merge of two versions):
+
+```
+<<<<<<< <rev> "description" (rebase destination)
+  our version
+||||||| <rev> "description" (parents of rebased revision)
+  base version
+=======
+  their version
+>>>>>>> <rev> "description" (rebased revision)
+```
+
+- Choose one side (or combine). **"rebase destination"** is usually the branch you rebased onto; **"rebased revision"** is the incoming change. Delete the markers and all but the content you want to keep.
+
+**3-sided conflict** (merge of three or more):
+
+```
+<<<<<<< conflict 1 of N
++++++++ <rev> "description" (rebase destination)
+  version A
+------- <rev> "description" (rebased revision)
+  version B
++++++++ <rev> "description" (rebased revision)
+  version C
+>>>>>>> conflict 1 of N ends
+```
+
+- Pick one variant (or merge manually). Delete from `<<<<<<<` through `>>>>>>> conflict … ends` and leave only the resolved text.
+
+**Tip:** Files may use **Unicode quotes** (“ ”) in the text. If string replacement fails, use a small script (e.g. Python) to find the conflict block by `<<<<<<<` / `>>>>>>>` and replace with the chosen content.
+
+### 11.4 What to keep when resolving
+
+- Prefer the **rebase destination** or **consistent semantics** with the rest of the branch (e.g. same config shape: `cutoverPtr` vs `cutover`, same error semantics: "owner not found" vs "owner map lookup not configured").
+- After editing, run `jj log -n 20` again; ensure no revision still shows `(conflict)` before considering the job done.
