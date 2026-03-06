@@ -111,6 +111,7 @@ Agents may add to, create, correct, or remove content in this repo. Every such c
 | Fix/remove content | Edit or delete; keep references consistent; commit. |
 | Commit | Conventional commit: `type(scope): subject`; body with bullet points for details. Use **skill-jujutsu.md**: `jj new <parent> -m "message"`, edit, `jj bookmark set <bookmark> -r @`. |
 | Push | `jj git push --branch <bookmark>` — **never** push to `master`; use a separate bookmark. |
+| Resolve jj merge/rebase conflicts | Use **skill-jujutsu.md** §11: `jj log` for `×` (conflict); `jj resolve --list -r <rev>` for paths; `jj edit <rev>`, fix markers (oldest first); repeat until no `(conflict)`. |
 | Subagent review → main agent address | Use **skill-subagent-review-main-agent-address.md**: subagent reviews, main agent triages and makes changes, loop until no further comments; do not commit review files. |
 
 ---
