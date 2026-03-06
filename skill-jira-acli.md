@@ -150,4 +150,4 @@ acli jira workitem comment delete <KEY> <COMMENT_ID>
 | List comments on issue | `acli jira workitem comment list <KEY>` |
 | Projects list | `acli jira project list` |
 
-For **summarizing what the user did in a day** (completed work, status changes, new issues, comments), use **[skill-jira-daily-summary.md](skill-jira-daily-summary.md)**.
+For **summarizing what the user did in a day** (completed work, status changes, new issues, comments), use **[skill-jira-daily-summary.md](skill-jira-daily-summary.md)**. For **team daily updates on a board** (by team member), use **[skill-jira-board-team-daily-summary.md](skill-jira-board-team-daily-summary.md)**. For **in-progress work on a board** (by team member, excluding Done/Dev Ready and optionally Backlog/To Do), use **[skill-jira-board-in-progress-summary.md](skill-jira-board-in-progress-summary.md)**.
