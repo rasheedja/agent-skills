@@ -208,3 +208,26 @@ gh pr comment <PR_NUMBER> --repo <OWNER/REPO> --body "Your comment text."
 | Resolve review thread  | GraphQL| `resolveReviewThread(input: { threadId: "<THREAD_ID>" })` — get thread IDs via `repository.pullRequest.reviewThreads` |
 
 All REST via: `gh api <ENDPOINT>` (add `-X POST` and body for create). Thread resolution via `gh api graphql`.
+
+---
+
+## 8. Troubleshooting: 422 when posting a reply
+
+**Symptom:** `POST repos/.../pulls/<PR>/comments` returns **422** with something like `"user_id can only have one pending review per pull request"`.
+
+**Cause:** Your user has a **pending review** on the same PR (a review that was started but not submitted). GitHub only allows one pending review per user per PR, and creating a new review comment can be treated as part of that pending review, which blocks the request.
+
+**Fix:** Find and remove or submit the pending review, then retry the reply.
+
+1. **List reviews and find the pending one:**
+   ```bash
+   gh api "repos/<OWNER>/<REPO>/pulls/<PR>/reviews" -q '.[] | select(.state == "PENDING") | {id, user: .user.login}'
+   ```
+2. **Delete the pending review** (if you don’t need to submit it):
+   ```bash
+   gh api "repos/<OWNER>/<REPO>/pulls/<PR>/reviews/<REVIEW_ID>" -X DELETE
+   ```
+   Or submit it with an empty body if you want to keep it as a “comment” review:  
+   `gh api repos/.../pulls/<PR>/reviews/<REVIEW_ID>/events -X POST -f event=comment -f body=""` (or use the “Submit review” flow in the UI).
+
+3. **Retry** the reply (step 4). The reply should succeed once no pending review from your user exists.
