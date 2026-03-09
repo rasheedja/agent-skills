@@ -107,9 +107,28 @@ jj abandon @
 1. `jj new <branch_bookmark> -m "fix: ..."`   — create new change from branch tip  
 2. Edit files (working copy is `@`)  
 3. `jj bookmark set <branch_bookmark> -r @`    — point branch at new change  
-4. `jj git push --branch <branch_bookmark>`   — push to remote  
-5. `jj log -r @ -T 'commit_id' -n 1`          — get commit hash for PR reply  
-6. Reply in PR thread with commit hash, then resolve thread (see skill-gh-pr-review-comments.md, skill-pr-review-loop.md).
+4. **Ensure working copy is a new empty commit** — see §8b.  
+5. `jj git push --branch <branch_bookmark>`   — push to remote  
+6. `jj log -r <bookmark> -T 'commit_id' -n 1`  — get commit hash for PR reply (use bookmark, since `@` may be the empty child)  
+7. Reply in PR thread with commit hash, then resolve thread (see skill-gh-pr-review-comments.md, skill-pr-review-loop.md).
+
+---
+
+## 8b. After committing: leave working copy on a new empty change
+
+Once an agent has finished making a commit (e.g. described the change and moved the branch bookmark to it), they **must** ensure the current jj state is a **new, empty change** on top of the commit they just made. That way the next edit starts from a clean slate and does not amend the last commit by mistake.
+
+- **Normal case (you just described and bookmarked a change):** Create a new empty child so the working copy moves there:
+  ```bash
+  jj new @
+  ```
+  After this, `@` is the new empty change (no description); the bookmark still points at the commit you just finished. Future edits go into this empty change.
+
+- **If you were editing an older commit** (e.g. `jj edit <rev>` to fix a past commit): After saving and (if desired) moving the branch bookmark to the correct tip, run `jj new <tip>` so the working copy is at a new empty change on top of the branch tip. If the branch tip is the commit you edited and rebased, use the bookmark as the parent: `jj new <branch_bookmark>`.
+
+- **When it's unreasonable:** If the workflow explicitly requires staying on the same change (e.g. you are about to run a command that expects `@` to be the commit you just made), you may skip creating the empty child. In that case, note in the reply that the working copy was left on the last commit intentionally.
+
+**Summary:** Unless there's a good reason not to, always end with `jj new @` (or `jj new <bookmark>` after editing an older commit) so the working copy is a new empty commit on top of the branch, with no description.
 
 ---
 
