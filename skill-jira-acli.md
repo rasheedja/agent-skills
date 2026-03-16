@@ -1,6 +1,6 @@
 # Skill: Talk to Jira via Atlassian CLI (acli)
 
-This skill covers how to query and inspect Jira Cloud using the Atlassian CLI (`acli`): authentication, searching work items with JQL, viewing issue details, and listing comments. It does not cover Confluence or other Atlassian products—only Jira.
+This skill covers how to query and inspect Jira Cloud using the Atlassian CLI (`acli`): authentication, searching work items with JQL, viewing issue details, listing comments, creating work items (Epic, Story, Task) with parent, and creating "Blocks" links with the correct direction. It does not cover Confluence or other Atlassian products—only Jira.
 
 **Prerequisites:** `acli` installed (e.g. `brew install atlassian/tap/acli`). You must be logged in: `acli auth login` (OAuth). Check status with `acli auth status`.
 
@@ -139,6 +139,86 @@ acli jira workitem comment delete <KEY> <COMMENT_ID>
 
 ---
 
+## 7. Create work items and link them
+
+### Create an issue
+
+```bash
+acli jira workitem create --project <PROJECT_KEY> --type <Epic|Story|Task|Bug> --summary "Title" [options]
+```
+
+**Common options:**
+
+| Flag | Description |
+|------|-------------|
+| `--project` | Project key (e.g. `PP12PB`). Required. |
+| `--type` | Issue type: `Epic`, `Story`, `Task`, `Bug`, etc. |
+| `--summary` | Short title. |
+| `--description` | Body text (plain or ADF). |
+| `--description-file` | Path to file with description (plain text). |
+| `--parent <KEY>` | Parent issue key (e.g. Epic key for Stories, Story key for sub-tasks if the project allows it). |
+| `--label` | Labels (comma-separated). |
+| `--assignee @me` | Self-assign. |
+| `--json` | Output created issue as JSON (e.g. to get `.key`). |
+
+**Examples:**
+
+```bash
+# Epic (no parent)
+acli jira workitem create --project PP12PB --type Epic --summary "My Epic" --description-file desc.txt --json
+
+# Story under an Epic
+acli jira workitem create --project PP12PB --type Story --parent PP12PB-749 --summary "My Story" --description "Details."
+
+# Task under Epic (some projects allow Task only under Epic, not under Story)
+acli jira workitem create --project PP12PB --type Task --parent PP12PB-749 --summary "My Task"
+```
+
+- Use `acli jira project list --limit 100` to find project keys. Not all projects allow Tasks as children of Stories.
+
+### Create "Blocks" links (dependencies)
+
+Use `acli jira workitem link create` to model "A blocks B" (B cannot be done until A is done).
+
+**Direction:** Jira Cloud's "Blocks" link type can be configured so that either the **inward** or the **outward** issue is the blocker. To get the correct display in the UI ("Blocker blocks Blocked"):
+
+- **If your site shows the INWARD issue as the blocker** (e.g. "is blocked by" points to the prerequisite):  
+  Use `--out <BLOCKED> --in <BLOCKER>` so that **BLOCKER** blocks **BLOCKED**.
+
+```bash
+# BLOCKER blocks BLOCKED (prerequisite first, dependent second)
+acli jira workitem link create --out <blocked_key> --in <blocker_key> --type Blocks --yes
+```
+
+- **If your site shows the OUTWARD issue as the blocker**, use `--out <BLOCKER> --in <BLOCKED>` instead.
+
+**Examples (inward = blocker):**
+
+```bash
+# Task T blocks Story S
+acli jira workitem link create --out PP12PB-750 --in PP12PB-756 --type Blocks --yes
+
+# Story 1 blocks Story 2
+acli jira workitem link create --out PP12PB-751 --in PP12PB-750 --type Blocks --yes
+```
+
+**Verify:** After creating a link, open both issues in the Jira UI and confirm the "Blocks" / "is blocked by" text matches intent. If it is reversed, delete the link and recreate with `--out` and `--in` swapped.
+
+### List and delete links
+
+```bash
+# List links for an issue (see link ID and linked issue)
+acli jira workitem link list --key <KEY>
+acli jira workitem link list --key <KEY> --json   # outwardIssueKey / inwardIssueKey
+
+# Delete a link by ID (from link list output)
+acli jira workitem link delete --id <LINK_ID> --yes
+```
+
+- Available link types: `acli jira workitem link type` (e.g. Blocks, Relates to).
+
+---
+
 ## Reference: quick command map
 
 | Goal | Command |
@@ -149,5 +229,8 @@ acli jira workitem comment delete <KEY> <COMMENT_ID>
 | View one issue (with comments) | `acli jira workitem view <KEY> --fields "key,summary,status,updated,comment"` |
 | List comments on issue | `acli jira workitem comment list <KEY>` |
 | Projects list | `acli jira project list` |
+| Create issue (Epic/Story/Task) | `acli jira workitem create --project <KEY> --type <Type> --summary "..." [--parent <KEY>]` |
+| Create Blocks link (inward = blocker) | `acli jira workitem link create --out <blocked> --in <blocker> --type Blocks --yes` |
+| List links on issue | `acli jira workitem link list --key <KEY>` |
 
 For **summarizing what the user did in a day** (completed work, status changes, new issues, comments), use **[skill-jira-daily-summary.md](skill-jira-daily-summary.md)**. For **team daily updates on a board** (by team member), use **[skill-jira-board-team-daily-summary.md](skill-jira-board-team-daily-summary.md)**. For **in-progress work on a board** (by team member, excluding Done/Dev Ready and optionally Backlog/To Do), use **[skill-jira-board-in-progress-summary.md](skill-jira-board-in-progress-summary.md)**.
