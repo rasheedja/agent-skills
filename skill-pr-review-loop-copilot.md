@@ -37,7 +37,7 @@ gh pr edit <PR_NUMBER> --repo <OWNER/REPO> --add-reviewer copilot-pull-request-r
 
 - Work only on **unresolved** threads (see skill-gh-pr-review-comments.md §5 for the GraphQL query; filter `isResolved === false`).
 - For **each** unresolved comment:
-  - **If you change code:** One commit per comment: `jj new <branch_bookmark> -m "fix: ..."` → edit → `jj bookmark set <branch> -r @` → `jj git push --branch <branch>` → get hash (`jj log -r @ -T 'commit_id' -n 1`) → reply in thread (include “Comment left by Cursor”, what you changed, and the **commit hash**) → resolve the thread (GraphQL `resolveReviewThread`). See skill-jujutsu.md and skill-gh-pr-review-comments.md.
+  - **If you change code:** One commit per comment: `jj new <branch_bookmark> -m "fix: ..."` → edit → `jj bookmark set <branch> -r @` → **`jj new @`** (empty working copy on top) → `jj git push --branch <branch>` → get hash (`jj log -r <branch> -T 'commit_id' -n 1`, since `@` may be the empty child) → reply in thread (include “Comment left by Cursor”, what you changed, and the **commit hash**) → resolve the thread (GraphQL `resolveReviewThread`). See skill-jujutsu.md and skill-gh-pr-review-comments.md.
   - **If you only reply (no code change):** Reply in thread with your rationale, then resolve the thread.
 - When all current unresolved threads are addressed and resolved, continue to §4.
 - **If posting a reply returns 422** (e.g. “user_id can only have one pending review per pull request”): your user has a pending review on this PR. Delete or submit that review (see skill-gh-pr-review-comments.md §8), then retry the reply.

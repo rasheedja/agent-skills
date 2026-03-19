@@ -2,7 +2,7 @@
 
 When you make changes in a **git or jujutsu (jj) repository**, use **conventional commits** and **small, logical commits**. Before each commit, **discover and run** the project’s checks and tests (Makefile, npm scripts, CI config, etc.). This applies to all work you do in version-controlled repos, not only the agent-skills repo.
 
-For **jj-specific mechanics** (creating a change, moving bookmarks, pushing), see **skill-jujutsu.md**. This skill covers **message format**, **commit granularity**, and **what to run before committing**.
+For **jj-specific mechanics** (creating a change, moving bookmarks, pushing, **`jj new @`** after a commit so `@` is empty on top of the branch, and **`jj new` + `jj squash`** instead of **`jj edit`** when amending past revisions), see **skill-jujutsu.md** §2 and §9b. This skill covers **message format**, **commit granularity**, and **what to run before committing**.
 
 ---
 
@@ -82,7 +82,7 @@ Check these (and similar) locations for test/check/lint/build commands:
 2. **Discover checks:** Inspect Makefile, package.json, .github/workflows, cabal, etc., and identify test/lint/build commands.
 3. **Run the relevant checks** and fix failures before committing.
 4. **Commit** with a conventional-commit message (subject + optional body with bullets). One logical change per commit.
-5. In a **jj** repo: use **skill-jujutsu.md** for `jj new`, `jj bookmark set`, and `jj git push`. In a **git** repo: use `git add` and `git commit` (and optionally `git push` when appropriate).
+5. In a **jj** repo: use **skill-jujutsu.md** for `jj new`, `jj bookmark set`, **`jj new @`** after finishing a commit (empty working copy), `jj squash` when folding a fix into a parent revision, and `jj git push`. In a **git** repo: use `git add` and `git commit` (and optionally `git push` when appropriate).
 
 ---
 
@@ -94,4 +94,4 @@ Check these (and similar) locations for test/check/lint/build commands:
 | Commit size | One logical change per commit; multiple files OK if they belong together. |
 | Before commit | Find and run project checks (Makefile, npm scripts, CI, cabal, cargo, etc.). |
 | Discover commands | Check Makefile, package.json, .github/workflows, cabal, Cargo.toml, pyproject, README/CONTRIBUTING. |
-| jj mechanics | See **skill-jujutsu.md** for creating changes, bookmarks, and push. |
+| jj mechanics | See **skill-jujutsu.md** for creating changes, bookmarks, push, empty working copy (`jj new @`), and **`jj new` + `jj squash`** vs **`jj edit`** (§2). |

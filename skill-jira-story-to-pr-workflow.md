@@ -111,7 +111,7 @@ See **skill-jujutsu.md** for the full sequence (e.g. creating the change, moving
 
 - **Conventional commits:** Every commit must follow `<type>(<scope>): <short description>`. Use `feat` for new behaviour, `fix` for bug fixes, `test` for test-only changes. Add a body with bullet points when it helps. See **skill-commits-and-pre-commit-checks.md**.
 - **Git:** `git add` and `git commit -m "type(scope): description"` (and optional `-m "body"`). Prefer small, logical commits.
-- **Jujutsu:** Use `jj new`, edit, then `jj describe -m "..."` and `jj bookmark set rasheedja/<STORY_KEY>/<short-description> -r @` so the bookmark stays at the tip. Use `jj split` when one change becomes multiple commits. See **skill-jujutsu.md**.
+- **Jujutsu:** Use `jj new`, edit, then `jj describe -m "..."` and `jj bookmark set rasheedja/<STORY_KEY>/<short-description> -r @` so the bookmark stays at the tip; then **`jj new @`** so `@` is an empty change on top (avoids accidental amends). To adjust an older revision, prefer **`jj new <rev>`** + **`jj squash`** over **`jj edit`**. Use `jj split` when one change becomes multiple commits. See **skill-jujutsu.md** §2, §9b.
 
 ---
 

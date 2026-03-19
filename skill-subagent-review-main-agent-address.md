@@ -33,7 +33,7 @@ Run the following until the **subagent reports no further comments** (or explici
 
 2. **Main agent reads the review output** and triages each recommendation (see §4).
 
-3. **Main agent makes only the changes** that are justified (correct, in scope for this branch). Use **small, logical commits** and **conventional commit format**; follow **skill-jujutsu.md** (e.g. `jj new`, `jj split` if splitting one change into multiple commits) and **skill-commits-and-pre-commit-checks.md** (run project checks before committing).
+3. **Main agent makes only the changes** that are justified (correct, in scope for this branch). Use **small, logical commits** and **conventional commit format**; follow **skill-jujutsu.md** (e.g. `jj new`, **`jj new @`** after a commit, **`jj new` + `jj squash`** instead of **`jj edit`** when amending past revisions, `jj split` if splitting one change into multiple commits) and **skill-commits-and-pre-commit-checks.md** (run project checks before committing).
 
 4. **Do not commit any review file** the subagent may have written (see §2).
 

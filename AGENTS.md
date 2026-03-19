@@ -65,7 +65,7 @@ Agents may add to, create, correct, or remove content in this repo. Every such c
 
 ## 3. Commits: conventional commits and body (Jujutsu)
 
-- **Every** change to this repo (new file, edit, or delete) must result in a **jujutsu commit**. Use the workflow in **skill-jujutsu.md** (`jj new`, edit files, `jj bookmark set`, and when pushing, `jj git push --branch <bookmark>`).
+- **Every** change to this repo (new file, edit, or delete) must result in a **jujutsu commit**. Use the workflow in **skill-jujutsu.md** (`jj new`, edit files, `jj bookmark set`, **`jj new @`** so `@` is an empty change on top of the branch tip, and when pushing, `jj git push --branch <bookmark>`). Prefer **`jj new` + `jj squash`** over **`jj edit`** when adjusting an existing revision (see **skill-jujutsu.md** §2); reserve `jj edit` mainly for conflict resolution (**skill-jujutsu.md** §12).
 - **One commit per logical change:**
   - One **new skill** → one commit.
   - One **update** to a skill (e.g. "add section on X") → one commit.
@@ -109,13 +109,13 @@ Agents may add to, create, correct, or remove content in this repo. Every such c
 | Add to a skill | Edit the file; add section or example; commit with jj (one commit per logical change). |
 | New skill | Create `skill-<topic>.md` with same structure as others; commit. |
 | Fix/remove content | Edit or delete; keep references consistent; commit. |
-| Commit | Conventional commit: `type(scope): subject`; body with bullet points for details. Use **skill-jujutsu.md**: `jj new <parent> -m "message"`, edit, `jj bookmark set <bookmark> -r @`. |
+| Commit | Conventional commit: `type(scope): subject`; body with bullet points for details. Use **skill-jujutsu.md**: `jj new <parent> -m "message"`, edit, `jj bookmark set <bookmark> -r @`, then **`jj new @`** (empty working copy on top). Prefer **`jj new` + `jj squash`** over **`jj edit`** for amending past revisions (§2). |
 | Push | `jj git push --branch <bookmark>` — **never** push to `master`; use a separate bookmark. |
-| Resolve jj merge/rebase conflicts | Use **skill-jujutsu.md** §11: `jj log` for `×` (conflict); `jj resolve --list -r <rev>` for paths; `jj edit <rev>`, fix markers (oldest first); repeat until no `(conflict)`. |
+| Resolve jj merge/rebase conflicts | Use **skill-jujutsu.md** §12: `jj log` for `×` (conflict); `jj resolve --list -r <rev>` for paths; `jj edit <rev>`, fix markers (oldest first); repeat until no `(conflict)`; then leave `@` on an empty change (§2, §9b). |
 | Subagent review → main agent address | Use **skill-subagent-review-main-agent-address.md**: subagent reviews, main agent triages and makes changes, loop until no further comments; do not commit review files. |
 
 ---
 
 ## 6. Cross-reference: Jujutsu workflow
 
-For the full jujutsu workflow (new change, bookmark, push, commit hash), see **skill-jujutsu.md**. Use that skill whenever you are making commits or pushes in this repo (or in any jj repo).
+For the full jujutsu workflow (new change, bookmark, **`jj new @`** after each finished commit, push, commit hash), and for **`jj new` + `jj squash`** vs **`jj edit`**, see **skill-jujutsu.md**. Use that skill whenever you are making commits or pushes in this repo (or in any jj repo).

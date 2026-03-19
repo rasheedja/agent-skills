@@ -1,6 +1,6 @@
 # Skill: Jujutsu (jj) — commits, bookmarks, and push for PR workflows
 
-This skill covers the **jj** (Jujutsu) CLI commands used in a typical “one commit per PR comment” workflow: creating a new change, moving the branch bookmark, pushing, and getting the commit hash for a PR reply. It also covers **resolving merge/rebase conflicts** (§11). It does not cover other advanced jj concepts (e.g. squash, evolutions).
+This skill covers the **jj** (Jujutsu) CLI commands used in a typical “one commit per PR comment” workflow: creating a new change, moving the branch bookmark, pushing, and getting the commit hash for a PR reply. It covers **`jj squash`** for folding fixes into an existing change without `jj edit`, and **resolving merge/rebase conflicts** (§12). It does not cover other advanced jj concepts (e.g. evolutions).
 
 For **commit message format** (conventional commits, body with bullets) and **running project checks before committing** (Makefile, npm scripts, CI, etc.), see **skill-commits-and-pre-commit-checks.md**.
 
@@ -17,7 +17,27 @@ For **commit message format** (conventional commits, body with bullets) and **ru
 
 ---
 
-## 2. List bookmarks and find the branch
+## 2. Agent preferences: empty working copy; prefer `jj new` and `jj squash` over `jj edit`
+
+**Problem:** A human or agent does follow-up work without checking `jj log` or `jj status`. If the working copy (`@`) still sits on a **real commit** (not an empty child on top), the next file edits can **amend or mix into that commit**—producing history or content nobody intended.
+
+**Default habits:**
+
+1. **Finish routine work on an empty change.** After you have described the change you care about and moved the branch bookmark, leave `@` on a **new empty child** on top of the branch tip (`jj new @` or `jj new <bookmark>`—see §9b). Treat “empty `@` on top of the bookmark” as the normal resting state between tasks.
+
+2. **Prefer `jj new` + `jj squash` instead of `jj edit` for changing an existing revision.** To adjust a commit `R` without checking out `R` as the working copy:
+   ```bash
+   jj new R
+   # @ is now an empty child of R; edit files
+   jj squash
+   ```
+   With no extra arguments, `jj squash` moves changes from `@` into its parent (`R`), folding your edits into `R`. (If `R` has multiple parents—a merge—plain `jj squash` may fail; use `jj squash --help` and `--from` / `--into` for those cases.)
+
+3. **When `jj edit` is still appropriate:** Resolving merge/rebase conflicts (§12) often requires **`jj edit <rev>`** so the working tree matches the conflicted revision. That is an intentional exception—not the default for “fix an older commit” or “add another commit on the branch.”
+
+---
+
+## 3. List bookmarks and find the branch
 
 ```bash
 jj bookmark list
@@ -34,7 +54,7 @@ rasheedja/PP12PB-599/store-hashmap-owners: mtuktqyt f11176e0 docs: align plan to
 
 ---
 
-## 3. Create a new change (one commit per fix)
+## 4. Create a new change (one commit per fix)
 
 ```bash
 jj new <PARENT> -m "descriptive message"
@@ -52,7 +72,7 @@ jj new rasheedja/PP12PB-599/store-hashmap-owners -m "fix: restrict owner_map env
 
 ---
 
-## 4. Move the branch bookmark to your new change
+## 5. Move the branch bookmark to your new change
 
 After you’ve made the edit and want this change to be the new branch tip:
 
@@ -66,18 +86,18 @@ jj bookmark set <BOOKMARK_NAME> -r @
 
 ---
 
-## 5. Push the branch
+## 6. Push the branch
 
 ```bash
 jj git push --branch <BOOKMARK_NAME>
 ```
 
-- Pushes the change that the bookmark points at to the remote (e.g. `origin`). Use the same name as in §4.
+- Pushes the change that the bookmark points at to the remote (e.g. `origin`). Use the same name as in §5.
 - If you see “Changes to push… Move forward bookmark…”, the push will update the remote branch to your new commit.
 
 ---
 
-## 6. Get the commit hash for a PR reply
+## 7. Get the commit hash for a PR reply
 
 After pushing, you need the **git commit hash** (40-char hex) to paste in your PR reply:
 
@@ -90,7 +110,7 @@ jj log -r @ -T 'commit_id' -n 1
 
 ---
 
-## 7. Abandoning a change (no code change for a comment)
+## 8. Abandoning a change (no code change for a comment)
 
 If you decide not to make a code change for a comment (reply only), you may have created an empty change by mistake. To discard it and return to the previous state:
 
@@ -102,21 +122,21 @@ jj abandon @
 
 ---
 
-## 8. Quick reference: “one commit per comment” sequence
+## 9. Quick reference: “one commit per comment” sequence
 
 1. `jj new <branch_bookmark> -m "fix: ..."`   — create new change from branch tip  
 2. Edit files (working copy is `@`)  
 3. `jj bookmark set <branch_bookmark> -r @`    — point branch at new change  
-4. **Ensure working copy is a new empty commit** — see §8b.  
+4. **Ensure working copy is a new empty commit** — see §9b.  
 5. `jj git push --branch <branch_bookmark>`   — push to remote  
 6. `jj log -r <bookmark> -T 'commit_id' -n 1`  — get commit hash for PR reply (use bookmark, since `@` may be the empty child)  
 7. Reply in PR thread with commit hash, then resolve thread (see skill-gh-pr-review-comments.md, skill-pr-review-loop.md).
 
 ---
 
-## 8b. After committing: leave working copy on a new empty change
+## 9b. After committing: leave working copy on a new empty change
 
-Once an agent has finished making a commit (e.g. described the change and moved the branch bookmark to it), they **must** ensure the current jj state is a **new, empty change** on top of the commit they just made. That way the next edit starts from a clean slate and does not amend the last commit by mistake.
+Once an agent has finished making a commit (e.g. described the change and moved the branch bookmark to it), they **must** ensure the current jj state is a **new, empty change** on top of the commit they just made. That way the next edit starts from a clean slate and does not amend the last commit by mistake. **Rationale:** see §2.
 
 - **Normal case (you just described and bookmarked a change):** Create a new empty child so the working copy moves there:
   ```bash
@@ -124,15 +144,15 @@ Once an agent has finished making a commit (e.g. described the change and moved 
   ```
   After this, `@` is the new empty change (no description); the bookmark still points at the commit you just finished. Future edits go into this empty change.
 
-- **If you were editing an older commit** (e.g. `jj edit <rev>` to fix a past commit): After saving and (if desired) moving the branch bookmark to the correct tip, run `jj new <tip>` so the working copy is at a new empty change on top of the branch tip. If the branch tip is the commit you edited and rebased, use the bookmark as the parent: `jj new <branch_bookmark>`.
+- **After folding a fix into an older commit with `jj new R` + `jj squash`:** Run `jj new <branch_bookmark>` (or `jj new @` if `@` is already the branch tip) so `@` is again an empty child on top of the branch tip before you stop.
 
 - **When it's unreasonable:** If the workflow explicitly requires staying on the same change (e.g. you are about to run a command that expects `@` to be the commit you just made), you may skip creating the empty child. In that case, note in the reply that the working copy was left on the last commit intentionally.
 
-**Summary:** Unless there's a good reason not to, always end with `jj new @` (or `jj new <bookmark>` after editing an older commit) so the working copy is a new empty commit on top of the branch, with no description.
+**Summary:** Unless there's a good reason not to, always end with `jj new @` (or `jj new <bookmark>` after squash/rebase) so the working copy is a new empty commit on top of the branch, with no description.
 
 ---
 
-## 9. Splitting one change into multiple commits
+## 10. Splitting one change into multiple commits
 
 When you have a single change that you want to turn into **several conventional commits** (e.g. one per package or layer):
 
@@ -161,7 +181,7 @@ When you have a single change that you want to turn into **several conventional 
 
 ---
 
-## 10. Revsets (for reference)
+## 11. Revsets (for reference)
 
 - `@` — current working copy change  
 - `@-` — parent of `@`  
@@ -170,11 +190,13 @@ When you have a single change that you want to turn into **several conventional 
 
 ---
 
-## 11. Resolving merge/rebase conflicts
+## 12. Resolving merge/rebase conflicts
 
 After a rebase or merge, some revisions may be in conflict. Resolve them **from oldest to newest** so that fixing a parent allows jj to rebase descendants and sometimes clear their conflicts too.
 
-### 11.1 Find which revisions have conflicts
+**Note:** This section uses **`jj edit`** on purpose (see §2)—you need the working copy on the conflicted revision to resolve markers.
+
+### 12.1 Find which revisions have conflicts
 
 ```bash
 jj log -n 30
@@ -192,7 +214,7 @@ jj resolve --list -r <REVSET>
 - `<REVSET>` can be the short change id (e.g. `xkopwonn`) or a bookmark. Example: `jj resolve --list -r npmmkmyz`.
 - Output is the list of paths with "2-sided conflict" or "3-sided conflict".
 
-### 11.2 Resolve conflicts one revision at a time
+### 12.2 Resolve conflicts one revision at a time
 
 1. **Edit the oldest conflicting revision** (the one closest to the branch base):
    ```bash
@@ -200,13 +222,15 @@ jj resolve --list -r <REVSET>
    ```
    The working copy is now that revision. You may see "Rebased N descendant commits onto updated working copy" when the parent was just fixed.
 
-2. **Open the conflicted files** and remove conflict markers, keeping the desired content (see §11.3 for marker formats).
+2. **Open the conflicted files** and remove conflict markers, keeping the desired content (see §12.3 for marker formats).
 
 3. **Save and move to the next conflicting revision.** Run `jj log` again; some conflicts may already be gone after the rebase. Then `jj edit <NEXT_CONFLICTING_ID>` and fix any remaining markers in the working copy.
 
 4. **Repeat** until `jj log` shows no `×` or `(conflict)`.
 
-### 11.3 Conflict marker formats
+5. **When all conflicts are cleared:** Prefer **`jj new <branch_bookmark>`** (or `jj new @` if appropriate) so `@` rests on an empty change on top of the branch tip (§2, §9b).
+
+### 12.3 Conflict marker formats
 
 **2-sided conflict** (merge of two versions):
 
@@ -239,7 +263,7 @@ jj resolve --list -r <REVSET>
 
 **Tip:** Files may use **Unicode quotes** (“ ”) in the text. If string replacement fails, use a small script (e.g. Python) to find the conflict block by `<<<<<<<` / `>>>>>>>` and replace with the chosen content.
 
-### 11.4 What to keep when resolving
+### 12.4 What to keep when resolving
 
 - Prefer the **rebase destination** or **consistent semantics** with the rest of the branch (e.g. same config shape: `cutoverPtr` vs `cutover`, same error semantics: "owner not found" vs "owner map lookup not configured").
 - After editing, run `jj log -n 20` again; ensure no revision still shows `(conflict)` before considering the job done.
