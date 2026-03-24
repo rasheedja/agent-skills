@@ -69,13 +69,70 @@ Do **not** ask the subagent to commit review report files; the main agent enforc
 
 ---
 
-## 6. Summary
+## 6. Variant: haiku for mechanical edits, main agent reviews
+
+The loop in §3 has the main agent make all changes. A useful variant for simple, well-scoped edits is to delegate the *implementation* to a **haiku subagent** while the main agent handles review and triage.
+
+**When to use this variant:**
+- The change is mechanical and well-defined: adding entries to a list, copying a pattern from one file to another, adding variable declarations following a known naming convention.
+- The main agent has already identified exactly what needs to change (from its own review or from user instructions).
+- Speed and cost matter — haiku is faster and cheaper for straightforward edits.
+
+**The loop:**
+
+1. **Main agent reviews** the current state and identifies all changes needed.
+2. **Spawn a haiku subagent** with precise instructions: exact file paths, exactly what to add/change, where to put it, and which convention to follow (e.g. "follow the naming style of the existing variables in this file"). Explicitly tell it: do NOT run jj/git commands, do NOT commit.
+3. **Main agent reviews the result** — read the changed files directly; do not rely on the subagent's summary alone. Check for correctness, consistency with repo conventions, placement, and alignment.
+4. If issues found: give a **targeted haiku task** to fix only the specific problems. Triage as in §4.
+5. Repeat from step 3 until review passes.
+
+**Key — be precise in haiku instructions.** Vague instructions ("make it consistent") produce inconsistent results. Specific instructions ("add these two variables after the last stage URL variable, following the exact format of the existing ones") work reliably.
+
+**After all haiku edits:** remember that haiku's file edits land in the current jj working copy (`@`). Run `jj squash` to fold them into the bookmark commit before pushing. See **skill-jujutsu.md §13**.
+
+---
+
+## 7. Background agents and Bash permissions
+
+When running a subagent with `run_in_background: true`, it may get blocked if the user's permission settings require approval for Bash commands. Background agents cannot prompt for approval interactively and will stall.
+
+**Signs of blockage:** the agent output shows `Permission to use Bash has been denied` and subsequent tool calls are cancelled.
+
+**Recovery:** the main agent should take over the blocked work directly — run the shell commands itself (jj, git, etc.) rather than re-spawning the background agent. Any file edits the agent completed before the block may still be usable; check the output file for what was done.
+
+---
+
+## 8. Running multiple subagents in parallel
+
+Spawning multiple haiku subagents simultaneously speeds up independent tasks. The main agent must enforce one hard rule before dispatching them:
+
+**No two subagents may edit the same file.**
+
+If two subagents both write to the same file, the second write overwrites the first — silently losing changes. jj/git cannot help here because both agents see the same working copy snapshot; there is no merge.
+
+**How to partition work safely:**
+
+- Assign each subagent a **disjoint set of files**. For example, when adding the same change to three environment accounts, give each subagent one account directory — they never touch the same file.
+- If a logical change requires edits to a shared file (e.g. a module or a variables file used by multiple accounts), **handle that file in one subagent** (or in the main agent), not split across subagents.
+- When in doubt, **serialise** — run subagents sequentially rather than risk a collision. The speed gain from parallelism is not worth lost edits.
+
+**Checklist before spawning parallel subagents:**
+
+1. List every file each subagent will touch.
+2. Confirm the sets are disjoint.
+3. If any file appears in more than one set, reassign it to a single subagent or handle it yourself.
+
+**After parallel subagents complete:** run `jj diff --stat` to verify the total set of changed files looks correct, then `jj squash` to fold all edits into the bookmark commit (see **skill-jujutsu.md §13**).
+
+---
+
+## 9. Summary
 
 | Step | Who | Action |
 |------|-----|--------|
 | Review | Subagent | Perform review; output report and recommendations. |
 | Triage | Main agent | Evaluate each comment: accurate? in scope? future work? wrong? |
-| Changes | Main agent | Implement only justified changes; small commits, conventional format (skill-jujutsu, skill-commits-and-pre-commit-checks). |
+| Changes | Main agent (or haiku subagent — see §6) | Implement only justified changes; small commits, conventional format (skill-jujutsu, skill-commits-and-pre-commit-checks). |
 | Review files | — | **Do not commit**; keep in PR/ticket or delete. |
 | Re-review | Subagent | Same scope; confirm no further comments or list remaining issues. |
 | Loop | — | Repeat until subagent reports no further comments. |

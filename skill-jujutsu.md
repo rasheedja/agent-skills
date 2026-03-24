@@ -267,3 +267,23 @@ jj resolve --list -r <REVSET>
 
 - Prefer the **rebase destination** or **consistent semantics** with the rest of the branch (e.g. same config shape: `cutoverPtr` vs `cutover`, same error semantics: "owner not found" vs "owner map lookup not configured").
 - After editing, run `jj log -n 20` again; ensure no revision still shows `(conflict)` before considering the job done.
+
+---
+
+## 13. Subagents editing files while `@` is an empty working copy
+
+When the main agent leaves `@` on a new empty child (per §9b) and then spawns a subagent to make file edits, those edits land in `@` — **not** in the bookmark commit (`@-`). This is the normal jj snapshot behaviour: any file change in the working tree is attributed to the current `@`.
+
+**Result:** after subagent edits, `jj diff -r <bookmark>` will show fewer files than expected; `jj diff` (working copy) will show all the subagent's changes.
+
+**Fix — always run `jj squash` after subagent edits:**
+
+```bash
+jj diff --stat          # confirm subagent edits are in @
+jj squash               # fold @ into parent (the bookmark commit)
+jj diff -r <bookmark> --stat  # verify all expected files are now in the commit
+```
+
+After `jj squash`, `@` is again a new empty child on top of the bookmark, and the bookmark commit contains the full set of changes.
+
+**When spawning multiple subagents in sequence:** each subagent's edits accumulate in `@`. A single `jj squash` at the end (after all subagents have finished) is sufficient — you do not need to squash between each one.
