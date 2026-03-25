@@ -15,6 +15,13 @@ For **commit message format** (conventional commits, body with bullets) and **ru
 - **Bookmark** — A named reference (e.g. a branch name like `rasheedja/PP12PB-599/store-hashmap-owners`) that points at a specific change. Use **`jj bookmark`** (not `jj book`).
 - **Commit / change** — In jj, each “change” has an id; when you push, it corresponds to a git commit. The **commit_id** from jj is the git commit hash (40-char hex) once exported.
 
+**Default bookmark / branch naming (unless the user or repo states otherwise):**
+
+- **With a ticket:** `rasheedja/<ticket-key>/<short-kebab-description>` — e.g. `rasheedja/PP12PB-636/load-s3-supply-data-to-snowflake`
+- **Without a ticket:** `rasheedja/<short-kebab-description>` — e.g. `rasheedja/realfi-preprod-supply-events-raw`
+
+Use the real tracker key for `<ticket-key>`. **Exception:** Some repos define their own pattern (e.g. **agent-skills** requires `agent-skills/...` per **AGENTS.md**); follow project-specific instructions when they exist.
+
 ---
 
 ## 2. Agent preferences: empty working copy; prefer `jj new` and `jj squash` over `jj edit`

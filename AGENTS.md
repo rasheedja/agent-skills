@@ -97,6 +97,7 @@ Agents may add to, create, correct, or remove content in this repo. Every such c
 - **Do not push to the `master` branch.** Treat `master` as protected; all agent edits go on other branches.
 - Agents may **create and push to other branches**. In jujutsu terms: create a **bookmark** for your branch (e.g. `agent-skills/update-review-skill` or `agent-skills/new-skill-docker`), make your change and commit, move the bookmark to your new change, then **push that bookmark** with `jj git push --branch <bookmark>`.
 - Use a **descriptive branch/bookmark name** so it’s clear what the change is (e.g. `agent-skills/fix-jira-acli`, `agent-skills/add-pr-checklist`). The human can then merge via PR or locally.
+- **This repo’s** bookmark names use the `agent-skills/...` prefix above — **not** the default `rasheedja/<ticket>/<desc>` pattern from **skill-jujutsu.md** (that default applies in other workspaces unless the user overrides).
 
 ---
 
