@@ -150,6 +150,8 @@ Once an agent has finished making a commit (e.g. described the change and moved 
 
 **Summary:** Unless there's a good reason not to, always end with `jj new @` (or `jj new <bookmark>` after squash/rebase) so the working copy is a new empty commit on top of the branch, with no description.
 
+**Common mistake — `jj new @-` instead of `jj new @`:** After `jj describe`, `@` is your **finished commit** (message + tree). Its parent `@-` is the revision **under** it (e.g. `main`). `jj new @-` creates a new empty revision whose parent is `@-`, i.e. a **sibling** of your commit, parallel to it — not a child stacked on top. That orphan sideline is almost never intended. Use **`jj new @`** so the empty working-copy revision’s parent is the commit you just finished. If you already ran `jj new @-` by mistake, `jj abandon @` (while `@` is that bad empty revision) and then `jj new <bookmark_or_rev>` pointing at your real commit tip.
+
 ---
 
 ## 10. Splitting one change into multiple commits
@@ -186,7 +188,7 @@ When you have a single change that you want to turn into **several conventional 
 - `@` — current working copy change  
 - `@-` — parent of `@`  
 - `<bookmark_name>` — the change the bookmark points at (e.g. `rasheedja/PP12PB-599/store-hashmap-owners`)  
-- `jj log -n 5` — show last 5 changes (graph)
+- `jj log -n 5` or `jj log --limit 5` — show last 5 changes (graph). Do **not** use git-style `-l`; `jj log` has no `-l` (use `-n` / `--limit`).
 
 ---
 
