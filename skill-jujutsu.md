@@ -296,3 +296,62 @@ jj diff -r <bookmark> --stat  # verify all expected files are now in the commit
 After `jj squash`, `@` is again a new empty child on top of the bookmark, and the bookmark commit contains the full set of changes.
 
 **When spawning multiple subagents in sequence:** each subagent's edits accumulate in `@`. A single `jj squash` at the end (after all subagents have finished) is sufficient — you do not need to squash between each one.
+
+---
+
+## 14. Squash pitfalls: never use `jj squash --from X --into Y` across a chain
+
+**Problem:** `jj squash --from X --into Y` rewrites every commit between X and Y. If the squashed content touches files that later commits also modify, this creates **cascading conflicts** through the entire chain — potentially corrupting dozens of commits with conflict markers and creating divergent commit IDs.
+
+**What happened in practice:** An attempt to squash a nix shell change (1 file, 2 lines) into an earlier commit in a chain of 8 caused 4 cascading conflicts, created divergent commit IDs (`change_id/0`, `change_id/1`, `change_id/2`), emptied an intermediate commit, and required a full reset to the remote to recover.
+
+### 14.1 Rules for squashing
+
+1. **`jj squash` (no args)** is safe — squashes `@` into its parent. This is the normal workflow (§2, §9b).
+
+2. **`jj squash --from X --into Y` is DANGEROUS when X and Y are not adjacent.** It rewrites the entire descendant chain. **Do not use this for history rewriting across multiple commits.**
+
+3. **To rewrite history, prefer adding a new commit on top** and let the human squash/rebase manually. Tell the human what should be squashed where.
+
+4. **If you must squash into a non-parent commit**, first check:
+   - Are there descendants between the two commits? If yes, **don't do it** — add a new commit instead.
+   - Does the content overlap with any intermediate commits? If yes, **definitely don't do it**.
+
+5. **If a squash creates conflicts**, do NOT try to resolve them by further squashes. Instead:
+   ```bash
+   # Reset the bookmark to the remote (known good state)
+   jj bookmark set <bookmark> -r '<bookmark>@origin' --allow-backwards
+   ```
+   Then make a new commit on top with the changes.
+
+### 14.2 Recovering from a botched squash
+
+If you've created divergent commits or cascading conflicts:
+
+```bash
+# 1. Abandon the broken divergent copies
+jj abandon <change_id>/0    # the conflicted version
+# Repeat for each divergent copy
+
+# 2. If the bookmark is corrupted, reset to remote
+jj bookmark set <bookmark> -r '<bookmark>@origin' --allow-backwards
+
+# 3. Verify clean state
+jj log -r 'ancestors(<bookmark>) & ~ancestors(main)' --no-graph
+
+# 4. Make your change as a new commit on top
+jj new <bookmark> -m "description"
+# edit files
+jj bookmark set <bookmark> -r @
+jj new @
+```
+
+### 14.3 Divergent commits
+
+When jj shows `(divergent)` next to a change ID, it means multiple commits share the same change ID — usually from a rewrite that created a fork. To clean up:
+
+- Identify which version is correct (usually the one matching `@origin`)
+- `jj abandon <change_id>/<N>` for each broken version
+- If a bookmark points at a divergent commit, reset it to the correct version
+
+**Bottom line:** Treat jj history as append-only during a session. Add commits on top; let humans squash. The cost of a clean extra commit is near zero. The cost of a botched squash can be hours of recovery.
