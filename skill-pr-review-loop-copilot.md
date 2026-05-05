@@ -10,11 +10,30 @@ This skill describes the **Copilot-specific loop**: (1) request a review from Gi
 
 ## 1. Request a review from Copilot
 
+Copilot is a **Bot**, not a User, so the usual reviewer-by-login paths don't work for it:
+
+- ❌ `gh pr edit ... --add-reviewer copilot-pull-request-reviewer` — fails (`Could not resolve user with login 'copilot'`); the underlying GraphQL `requestReviewsByLogin` only accepts users.
+- ❌ `POST /repos/{owner}/{repo}/pulls/{pr}/requested_reviewers` with `{"reviewers":["Copilot"]}` — returns 201 but **silently dedups**: no `review_requested` event, `requested_reviewers: []`. Copilot is never notified.
+
+✅ Use the GraphQL `requestReviews` mutation with the `botIds` field:
+
 ```bash
-gh pr edit <PR_NUMBER> --repo <OWNER/REPO> --add-reviewer copilot-pull-request-reviewer
+# 1. Look up Copilot's bot node id (one-off — same id on all PRs):
+gh api graphql -f query='{repository(owner:"<OWNER>",name:"<REPO>"){pullRequest(number:<ANY_PR_WITH_COPILOT_REVIEW>){reviews(first:5){nodes{author{__typename login ... on Bot{id}}}}}}}'
+# Look for {"__typename":"Bot","login":"copilot-pull-request-reviewer","id":"BOT_..."}.
+
+# 2. Request the review:
+PR_ID=$(gh api graphql -f query='{repository(owner:"<OWNER>",name:"<REPO>"){pullRequest(number:<PR>){id}}}' --jq '.data.repository.pullRequest.id')
+gh api graphql -f query='
+mutation($prId:ID!, $botIds:[ID!]!){
+  requestReviews(input:{pullRequestId:$prId, botIds:$botIds, union:true}){
+    pullRequest{ reviewRequests(first:5){ nodes{ requestedReviewer{ ... on Bot{login} } } } }
+  }
+}' -F prId=$PR_ID -F botIds=<COPILOT_BOT_ID>
 ```
 
-- Use the reviewer login your repo uses (often `copilot-pull-request-reviewer`).
+- A successful call shows `copilot-pull-request-reviewer` in `reviewRequests.nodes`.
+- `union: true` keeps any other already-requested reviewers in place.
 - This triggers Copilot to run a review on the current PR head.
 
 ---
@@ -46,10 +65,7 @@ gh pr edit <PR_NUMBER> --repo <OWNER/REPO> --add-reviewer copilot-pull-request-r
 
 ## 4. Re-request Copilot (required after every round), then poll for the next review
 
-- **You must re-request** after addressing comments. Do not skip this step:
-  ```bash
-  gh pr edit <PR_NUMBER> --repo <OWNER/REPO> --add-reviewer copilot-pull-request-reviewer
-  ```
+- **You must re-request** after addressing comments. Do not skip this step. Use the same GraphQL `requestReviews` + `botIds` call from §1 — `gh pr edit --add-reviewer` and the REST `requested_reviewers` POST do not work for the Copilot bot (see §1).
 - **Poll until a *new* Copilot review appears** (typically 5–7 minutes). Record the time when you re-requested; keep polling until the latest Copilot review’s `submittedAt` is **after** that time (or until timeout). Do not stop just because the current unresolved count is 0 — wait for the new review.
 - **Then** check that new review:
   - If the review body says **“generated no new comments”** (or 0 comments), the loop is **done**.
