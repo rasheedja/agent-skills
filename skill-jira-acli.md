@@ -126,6 +126,22 @@ acli jira workitem comment delete <KEY> <COMMENT_ID>
 
 - **List comments:** Use when you need to see who commented and when (e.g. to find "comments I added today"). The search API does not filter by "commented by currentUser()" in standard JQL, so listing comments per issue is the way to attribute them.
 
+### LLM-attribution sign-off (applies to any tool — acli, MCP Atlassian, web UI, etc.)
+
+**Whenever an LLM posts a Jira comment on a user's behalf, the comment must include an explicit sign-off making the LLM authorship clear.** Jira shows the human's name as the comment author (because the API call is authenticated as the user), which can mislead a reader into thinking the human wrote it. A visible footer prevents that confusion and supports clear audit trails.
+
+Append a footer like this to the bottom of every LLM-posted comment:
+
+```markdown
+---
+
+_Comment drafted and posted by Claude Code (LLM agent), invoked by <user's display name>._
+```
+
+Substitute the actual model name (e.g. "Claude Code", "Claude Sonnet 4.6", etc.) and the invoking user. The horizontal rule above the line is important — it visually separates the sign-off from the comment body.
+
+This rule applies regardless of which Jira interface the LLM uses (CLI, MCP, REST, browser automation). Reason: the human user has asked for this convention because Jira authorship attribution doesn't distinguish "the human typed this" from "the human's agent typed this," and that distinction matters for stakeholder trust and for replying-to-comment etiquette.
+
 ---
 
 ## 6. Other useful work item commands
