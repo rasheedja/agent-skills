@@ -15,12 +15,19 @@ For **commit message format** (conventional commits, body with bullets) and **ru
 - **Bookmark** — A named reference (e.g. a branch name like `rasheedja/PP12PB-599/store-hashmap-owners`) that points at a specific change. Use **`jj bookmark`** (not `jj book`).
 - **Commit / change** — In jj, each “change” has an id; when you push, it corresponds to a git commit. The **commit_id** from jj is the git commit hash (40-char hex) once exported.
 
-**Default bookmark / branch naming (unless the user or repo states otherwise):**
+**Bookmark / branch naming — the repo's own convention always wins.**
+
+Before naming a branch or bookmark, check the repo's stated convention first: its `CLAUDE.md` / `AGENTS.md` / `CONTRIBUTING`, or an explicit user instruction. If the repo defines a pattern, **use it** — a repo-stated convention takes precedence over the personal default below. Known examples:
+
+- **agent-skills** requires the `agent-skills/...` prefix (per its `AGENTS.md`).
+- **realfi** requires `feature/<jira-ticket>-<name>` for engineering branches (per its `CLAUDE.md`).
+
+Only when the repo states no convention, fall back to the personal default:
 
 - **With a ticket:** `rasheedja/<ticket-key>/<short-kebab-description>` — e.g. `rasheedja/PP12PB-636/load-s3-supply-data-to-snowflake`
 - **Without a ticket:** `rasheedja/<short-kebab-description>` — e.g. `rasheedja/realfi-preprod-supply-events-raw`
 
-Use the real tracker key for `<ticket-key>`. **Exception:** Some repos define their own pattern (e.g. **agent-skills** requires `agent-skills/...` per **AGENTS.md**); follow project-specific instructions when they exist.
+Use the real tracker key for `<ticket-key>`.
 
 ---
 
