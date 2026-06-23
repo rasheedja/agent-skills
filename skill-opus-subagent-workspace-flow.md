@@ -2,7 +2,7 @@
 
 This skill describes the workflow for implementing a ticket by:
 
-1. Creating an **isolated workspace** in a sibling directory — a **jj workspace** (if the repo uses jj) or a **git worktree** (if it's a plain git repo).
+1. Creating an **isolated workspace** in a sibling directory — a **git worktree** (the default, incl. colocated jj repos) or a **jj workspace** (only for jj-preferred projects).
 2. Branching a bookmark/branch either on top of **`main`** (standalone) or on top of an **existing feature bookmark/branch** (stacked PR).
 3. Writing a **plan file** (`PLAN-<TICKET>.md`) inside the workspace.
 4. Delegating implementation to an **Opus subagent** constrained to that workspace (no VCS operations, no pushing).
@@ -11,7 +11,7 @@ This skill describes the workflow for implementing a ticket by:
 7. Committing, setting the bookmark/branch, pushing, and opening a **draft PR** (with `--base` for stacked PRs).
 8. Leaving the workspace in a clean state for the next edit.
 
-**Which VCS?** Detect at the start: if `.jj/` exists in the repo, use the jj path. If only `.git/` exists, use the git path. If neither, the repo is not version-controlled and this skill does not apply. When both are present (jj is a git backend), **prefer jj** — it gives you workspaces, and bypassing it with raw `git` commands can desync the snapshot.
+**Which VCS?** **Default to git worktrees.** Agents are more reliable on plain git — the model's default instinct matches the tool, so there's no git/jj impedance, no jj-skill loading, and none of the jj footguns (`jj new` between rounds, squash-vs-edit, `--allow-new` on first push). Use the **git path** whenever the repo has a `.git/` dir, **including colocated jj repos** (`.git/` + `.jj/` both present) — `git worktree` operates on the shared git backend. Use the **jj path** only when the project specifically wants jj (a non-colocated jj repo with no top-level `.git/`, or an explicit project/user preference). In a colocated repo, stick to git **or** jj for a given task — don't interleave them, or the snapshots can drift (reconcile with `jj git import`/`export` if ever needed).
 
 **Prerequisites:** **skill-jujutsu.md** (jj change/bookmark/push mechanics — only when using jj), **skill-jira-story-to-pr-workflow.md** (ticket reading, evaluation, transition, naming conventions), **skill-commits-and-pre-commit-checks.md** (conventional commits, running checks), **skill-subagent-review-main-agent-address.md** (review loop after the subagent finishes).
 
@@ -29,7 +29,7 @@ This skill describes the workflow for implementing a ticket by:
 
 ## 1. Create the isolated workspace
 
-### jj (preferred when the repo has `.jj/`)
+### jj (only when the project specifically uses jj)
 
 Sibling workspaces are the right tool: each has its own `@` and its own snapshot, so you can work on multiple tickets in parallel without `jj edit`-thrashing a single working copy. The main session's default workspace stays untouched, and jj sees all workspaces as the same repo — bookmarks, commits, and history are shared; only the working copy state is per-workspace.
 
@@ -42,9 +42,9 @@ jj workspace list                         # verify the new workspace appears wit
 
 After `jj workspace add`, the new workspace's `@` is typically an empty child of `main` (or of whichever revision was the tip when the workspace was created). Check with `jj log -n 3`.
 
-### git (plain git repo, no jj)
+### git worktree (default — including colocated jj repos)
 
-Use `git worktree` to the same effect: a sibling directory with its own working tree and HEAD, sharing the underlying git object database with the main clone.
+Use `git worktree`: a sibling directory with its own working tree and HEAD, sharing the underlying git object database with the main clone. This works even in a **colocated** repo (`.git/` + `.jj/`) — `git worktree` operates on the shared git backend. Branch off **`origin/main`**, not local `main`: in a colocated repo `git rev-parse main` can fail because jj owns the bookmarks, so a local `main` ref may not exist for git.
 
 ```bash
 cd /path/to/repo                          # the main clone
@@ -60,7 +60,7 @@ The `-b` flag creates the branch at the same time as the worktree, starting from
 
 ## 2. Bookmark/branch: standalone on `main`, or stacked on an existing feature branch
 
-### jj — standalone PR (most common)
+### jj — standalone PR
 
 ```bash
 jj new main                                        # empty @ on top of main
@@ -76,7 +76,7 @@ jj new <username>/<PARENT_TICKET>/<parent-slug>
 jj bookmark create <username>/<TICKET>/<slug> -r @
 ```
 
-### git — standalone PR
+### git — standalone PR (default)
 
 The `git worktree add -b ... origin/main` command in §1 already created the branch on top of main. Nothing else to do.
 
@@ -298,7 +298,7 @@ Each subagent is workspace-isolated by prompt, so the "no two subagents edit the
 ## 11. End-to-end checklist
 
 1. Read the ticket, evaluate, transition to "In Development" (see **skill-jira-story-to-pr-workflow.md** §1–§4).
-2. Detect VCS: jj if `.jj/` exists, else git.
+2. Choose VCS: **git worktree by default** (incl. colocated jj repos); jj only if the project specifically uses jj.
 3. Create the workspace:
    - jj: `jj workspace add ../<repo>-<TICKET>`; `cd` into it.
    - git: `git worktree add -b <username>/<TICKET>/<slug> ../<repo>-<TICKET> origin/main`; `cd` into it.

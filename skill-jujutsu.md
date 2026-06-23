@@ -1,5 +1,7 @@
 # Skill: Jujutsu (jj) — commits, bookmarks, and push for PR workflows
 
+> **Scope:** This is the *how-to* reference for working in jj — not a directive to use it. For the subagent / Jira-to-PR flow, **git worktrees are the default** (agents are more reliable on plain git); see **skill-opus-subagent-workspace-flow.md**. Reach for this skill only when you deliberately work in a jj-preferred repo, or need to resolve jj state / conflicts.
+
 This skill covers the **jj** (Jujutsu) CLI commands used in a typical “one commit per PR comment” workflow: creating a new change, moving the branch bookmark, pushing, and getting the commit hash for a PR reply. It covers **`jj squash`** for folding fixes into an existing change without `jj edit`, and **resolving merge/rebase conflicts** (§12). It does not cover other advanced jj concepts (e.g. evolutions).
 
 For **commit message format** (conventional commits, body with bullets) and **running project checks before committing** (Makefile, npm scripts, CI, etc.), see **skill-commits-and-pre-commit-checks.md**.

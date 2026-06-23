@@ -33,7 +33,7 @@ Run the following until the **subagent reports no further comments** (or explici
 
 2. **Main agent reads the review output** and triages each recommendation (see §4).
 
-3. **Main agent makes only the changes** that are justified (correct, in scope for this branch). Use **small, logical commits** and **conventional commit format**; follow **skill-jujutsu.md** (e.g. `jj new`, **`jj new @`** after a commit, **`jj new` + `jj squash`** instead of **`jj edit`** when amending past revisions, `jj split` if splitting one change into multiple commits) and **skill-commits-and-pre-commit-checks.md** (run project checks before committing).
+3. **Main agent makes only the changes** that are justified (correct, in scope for this branch). Use **small, logical commits** and **conventional commit format**; commit on the branch (git, default: `git add` + `git commit`; jj: see **skill-jujutsu.md** for `jj new`, **`jj new @`**, **`jj new` + `jj squash`** vs **`jj edit`**, `jj split`) and follow **skill-commits-and-pre-commit-checks.md** (run project checks before committing).
 
 4. **Do not commit any review file** the subagent may have written (see §2).
 
@@ -88,7 +88,7 @@ The loop in §3 has the main agent make all changes. A useful variant for simple
 
 **Key — be precise in haiku instructions.** Vague instructions ("make it consistent") produce inconsistent results. Specific instructions ("add these two variables after the last stage URL variable, following the exact format of the existing ones") work reliably.
 
-**After all haiku edits:** remember that haiku's file edits land in the current jj working copy (`@`). Run `jj squash` to fold them into the bookmark commit before pushing. See **skill-jujutsu.md §13**.
+**After all haiku edits:** the subagent's file edits land in the worktree as unstaged changes (git) or the current jj working copy (`@`). Stage and commit them onto the branch before pushing — git (default): `git add` + `git commit`; jj: `jj squash` to fold into the bookmark commit (**skill-jujutsu.md §13**).
 
 ---
 
@@ -122,7 +122,7 @@ If two subagents both write to the same file, the second write overwrites the fi
 2. Confirm the sets are disjoint.
 3. If any file appears in more than one set, reassign it to a single subagent or handle it yourself.
 
-**After parallel subagents complete:** run `jj diff --stat` to verify the total set of changed files looks correct, then `jj squash` to fold all edits into the bookmark commit (see **skill-jujutsu.md §13**).
+**After parallel subagents complete:** run `git diff --stat` (or `jj diff --stat`) to verify the total set of changed files looks correct, then commit them onto the branch — git (default): `git add` + `git commit`; jj: `jj squash` into the bookmark commit (**skill-jujutsu.md §13**).
 
 ---
 
