@@ -1,6 +1,6 @@
 # Skill: Conducting a code / PR review pass
 
-This skill describes how to perform a **critical review** of a PR: evaluate correctness, idiomatic style, and test coverage. For **replying to** existing review comments and resolving threads, use **[skill-performing-reviews.md](skill-performing-reviews.md)** and **[skill-gh-pr-review-comments.md](skill-gh-pr-review-comments.md)**.
+This skill describes how to perform a **critical review** of a PR: evaluate correctness, idiomatic style, and test coverage. For **replying to** existing review comments and resolving threads, use **[skill-performing-reviews.md](skill-performing-reviews.md)** and **[skill-gh-pr-review-comments.md](skill-gh-pr-review-comments.md)**. To review a PR **you didn't author** end-to-end — isolated worktree, parallel subagent reviewers, then posting the findings as a categorized LLM-marked `COMMENT` review — use **[skill-worktree-pr-review-and-post.md](skill-worktree-pr-review-and-post.md)** (this skill covers *what* to evaluate; that one covers the *workflow and posting mechanics*).
 
 ---
 
