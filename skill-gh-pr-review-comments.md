@@ -102,7 +102,7 @@ gh api graphql -f query='
 query {
   repository(owner: "<OWNER>", name: "<REPO>") {
     pullRequest(number: <PR_NUMBER>) {
-      reviewThreads(first: 50) {
+      reviewThreads(first: 100) {
         nodes {
           id
           isResolved
@@ -117,6 +117,7 @@ query {
 
 - Replace `<OWNER>`, `<REPO>`, `<PR_NUMBER>` (e.g. `realfi-co`, `dagster-orchestration`, `29`).
 - Each `id` is the thread’s GraphQL node ID (e.g. `PRRT_kwDO...`). Use it to resolve that thread.
+- **Use `first: 100`, not `first: 50`.** Long-running review loops (e.g. iterating with Copilot for many rounds) accumulate dozens of mostly-resolved threads, and a `first: 50` cap silently truncates and undercounts unresolved threads — a classic "looks all clean, isn't" trap. For PRs with >100 threads, paginate with `pageInfo.hasNextPage` + `endCursor`.
 - `isResolved`: `true` = already resolved; `false` = still open. Only unresolved threads need resolving after you reply.
 
 **Resolve one thread:**

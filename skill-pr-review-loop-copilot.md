@@ -10,11 +10,30 @@ This skill describes the **Copilot-specific loop**: (1) request a review from Gi
 
 ## 1. Request a review from Copilot
 
+Copilot is a **Bot**, not a User, so the usual reviewer-by-login paths don't work for it:
+
+- ❌ `gh pr edit ... --add-reviewer copilot-pull-request-reviewer` — fails (`Could not resolve user with login 'copilot'`); the underlying GraphQL `requestReviewsByLogin` only accepts users.
+- ❌ `POST /repos/{owner}/{repo}/pulls/{pr}/requested_reviewers` with `{"reviewers":["Copilot"]}` — returns 201 but **silently dedups**: no `review_requested` event, `requested_reviewers: []`. Copilot is never notified.
+
+✅ Use the GraphQL `requestReviews` mutation with the `botIds` field:
+
 ```bash
-gh pr edit <PR_NUMBER> --repo <OWNER/REPO> --add-reviewer copilot-pull-request-reviewer
+# 1. Look up Copilot's bot node id (one-off — same id on all PRs):
+gh api graphql -f query='{repository(owner:"<OWNER>",name:"<REPO>"){pullRequest(number:<ANY_PR_WITH_COPILOT_REVIEW>){reviews(first:5){nodes{author{__typename login ... on Bot{id}}}}}}}'
+# Look for {"__typename":"Bot","login":"copilot-pull-request-reviewer","id":"BOT_..."}.
+
+# 2. Request the review:
+PR_ID=$(gh api graphql -f query='{repository(owner:"<OWNER>",name:"<REPO>"){pullRequest(number:<PR>){id}}}' --jq '.data.repository.pullRequest.id')
+gh api graphql -f query='
+mutation($prId:ID!, $botIds:[ID!]!){
+  requestReviews(input:{pullRequestId:$prId, botIds:$botIds, union:true}){
+    pullRequest{ reviewRequests(first:5){ nodes{ requestedReviewer{ ... on Bot{login} } } } }
+  }
+}' -F prId=$PR_ID -F botIds=<COPILOT_BOT_ID>
 ```
 
-- Use the reviewer login your repo uses (often `copilot-pull-request-reviewer`).
+- A successful call shows `copilot-pull-request-reviewer` in `reviewRequests.nodes`.
+- `union: true` keeps any other already-requested reviewers in place.
 - This triggers Copilot to run a review on the current PR head.
 
 ---
@@ -22,14 +41,35 @@ gh pr edit <PR_NUMBER> --repo <OWNER/REPO> --add-reviewer copilot-pull-request-r
 ## 2. Wait for Copilot to complete (poll; no human interaction)
 
 - Copilot usually finishes within **5–7 minutes**. **Poll automatically** (e.g. every 60–90 seconds); do not stop and ask the user to check. Use a timeout (e.g. 30 minutes) if Copilot does not submit.
-- To see when the latest review landed:
-  ```bash
-  gh api repos/<OWNER>/<REPO>/pulls/<PR>/reviews --jq '.[] | select(.user.login == "copilot-pull-request-reviewer[bot]") | {id, submitted_at}'
-  ```
-- To see if Copilot left **any new comments**: fetch review threads (GraphQL `repository.pullRequest.reviewThreads`) and filter `isResolved === false`, or fetch the **latest review body** — Copilot often says “generated no new comments” when it has nothing to add:
-  ```bash
-  gh api "repos/<OWNER>/<REPO>/pulls/<PR>/reviews/<REVIEW_ID>" --jq '.body'
-  ```
+
+### 2.1 Convergence signal — poll *unresolved review threads*, not `/pulls/N/reviews`
+
+**Use the GraphQL `reviewThreads` connection filtered to `isResolved == false` as the *single* signal that Copilot has new feedback.** A monitor that polls only `/pulls/N/reviews` for new submission timestamps is unreliable and will miss comments — see the trap below.
+
+```bash
+# Authoritative "is there feedback I haven't dealt with?" query:
+gh api graphql -f query='{repository(owner:"<OWNER>",name:"<REPO>"){pullRequest(number:<PR>){reviewThreads(first:100){nodes{isResolved}}}}}' \
+  --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length'
+# 0 → no work to do. >0 → new (or still-open) threads to address.
+```
+
+**Why not `/pulls/N/reviews`:** that endpoint only lists `PullRequestReview` objects (top-level *submissions*). Copilot frequently leaves individual review comments via the `/pulls/N/comments` path **without** ever wrapping them in a submitted review — so `/reviews` stays frozen at the last formally-submitted review while real, unresolved threads pile up. A monitor anchored on `submitted_at` reports "no new review" while the bot has clearly left feedback. Two distinct sessions burned 30+ min each on this trap before the user had to point at the unresolved comments directly.
+
+**Two more pitfalls:**
+- **Pagination cap:** `reviewThreads(first: 50)` silently truncates on long-running review loops (it's easy to accumulate 50+ threads across many rounds, mostly resolved). Use `first: 100` and paginate with `pageInfo.hasNextPage` if you expect more. An undercount looks identical to "all clean."
+- **`gh --jq` doesn't take `--arg`:** `gh api ... --jq --arg foo bar '.[]'` is silently malformed — `--jq` only accepts a single jq expression argument and `--arg` is ignored, producing empty output. If you need to inject a shell value, interpolate it into the jq expression with shell quoting, or pipe the raw API response through standalone `jq -n --arg foo bar '...'`.
+
+### 2.2 Optional secondary checks
+
+These are diagnostics, not the convergence signal. Don't drive the loop off them.
+
+```bash
+# Latest Copilot submission timestamp (informational; can stay frozen during active rounds):
+gh api repos/<OWNER>/<REPO>/pulls/<PR>/reviews --jq '.[] | select(.user.login == "copilot-pull-request-reviewer[bot]") | {id, submitted_at}'
+
+# Latest review body — Copilot sometimes says "generated no new comments" here when it has nothing to add:
+gh api "repos/<OWNER>/<REPO>/pulls/<PR>/reviews/<REVIEW_ID>" --jq '.body'
+```
 
 ---
 
@@ -46,25 +86,21 @@ gh pr edit <PR_NUMBER> --repo <OWNER/REPO> --add-reviewer copilot-pull-request-r
 
 ## 4. Re-request Copilot (required after every round), then poll for the next review
 
-- **You must re-request** after addressing comments. Do not skip this step:
-  ```bash
-  gh pr edit <PR_NUMBER> --repo <OWNER/REPO> --add-reviewer copilot-pull-request-reviewer
-  ```
-- **Poll until a *new* Copilot review appears** (typically 5–7 minutes). Record the time when you re-requested; keep polling until the latest Copilot review’s `submittedAt` is **after** that time (or until timeout). Do not stop just because the current unresolved count is 0 — wait for the new review.
-- **Then** check that new review:
-  - If the review body says **“generated no new comments”** (or 0 comments), the loop is **done**.
-  - If all new comments can be addressed with **reply-only** (no code change), reply and resolve each, then the loop is **done**.
-  - If any comment **requires a code change**, go back to §3, address and resolve them, then **re-request again** (§4) and poll for the next review. Repeat until Copilot generates a review with 0 comments or all comments are reply-only.
+- **You must re-request** after addressing comments. Do not skip this step. Use the same GraphQL `requestReviews` + `botIds` call from §1 — `gh pr edit --add-reviewer` and the REST `requested_reviewers` POST do not work for the Copilot bot (see §1).
+- **Poll on the unresolved-thread count from §2.1**, not on `submittedAt`. Record the time when you re-requested; from that point, watch `[.nodes[] | select(.isResolved == false)] | length`:
+  - **Goes from 0 → N (any N>0)** within the timeout (typically 5–7 min): there's new feedback. Go to §3, address it, then re-request again here.
+  - **Stays at 0 for ≥30 min** after re-request: treat as **converged**. Don't keep waiting on `submittedAt` — Copilot can decline to leave a fresh review submission entirely when there's nothing to add (no "generated no new comments" body, no `submittedAt` bump). The unresolved count being 0 across a long quiet window is the only reliable signal that the loop is done.
+- For diagnostics only, you can also peek at the latest review body — if it says **"generated no new comments"**, the loop is done. But don't gate the loop on it: a silent (no review) and a "no new comments" review look the same on the unresolved-count signal, which is what matters.
 
 ---
 
 ## 5. End-to-end summary
 
 1. Request Copilot review (§1).
-2. **Poll** until Copilot submits (typically 5–7 min); do not stop early (§2).
+2. **Poll the unresolved-thread count** (§2.1) until it goes >0 — that's Copilot's feedback landing. Don't poll `/reviews` `submittedAt` as the convergence signal; it misses individual comments left without a wrapping review submission.
 3. Get unresolved threads; for each: address (one commit, push, reply with hash, resolve) or reply-only then resolve (§3).
-4. **Re-request Copilot** (§4). You must do this after every round. **Poll again** until a *new* Copilot review appears (submitted after the re-request), then check that review.
-5. If that new review has **0 comments** (or “generated no new comments”) → **done**. If all comments are reply-only → reply, resolve, **done**. If any comment requires a code change → go to step 3, then step 4 again. **Keep looping** (address → re-request → poll → check) until Copilot generates a review with 0 comments or all reply-only.
+4. **Re-request Copilot** (§4). You must do this after every round. **Poll the unresolved-thread count again** (§4): if it goes >0, go to step 3; if it stays at 0 for ≥30 min, **done**.
+5. **Keep looping** (address → re-request → poll → check) until the unresolved-thread count stays at 0 across a 30-min quiet window after a re-request, or every new comment turns out to be reply-only (no code change).
 
 ---
 
