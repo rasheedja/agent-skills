@@ -35,7 +35,7 @@ When a task could benefit from a skill (e.g. GitHub PRs, Jira, jujutsu, code rev
 
 ## 2. Updating skills
 
-Agents may add to, create, correct, or remove content in this repo. Every such change must be committed with jujutsu (see §3). Never push to the `master` branch; use a separate branch (bookmark) for your changes (see §4).
+Agents may add to, create, correct, or remove content in this repo. Every such change must be committed on a branch (see §3) — **git is the default** (this repo is colocated, so `git` commits work directly); jj is fine if you prefer it. Never push to the `master` branch; use a separate branch for your changes (see §4).
 
 ### 2.1 Add content to existing skills
 
@@ -63,9 +63,9 @@ Agents may add to, create, correct, or remove content in this repo. Every such c
 
 ---
 
-## 3. Commits: conventional commits and body (Jujutsu)
+## 3. Commits: conventional commits and body
 
-- **Every** change to this repo (new file, edit, or delete) must result in a **jujutsu commit**. Use the workflow in **skill-jujutsu.md** (`jj new`, edit files, `jj bookmark set`, **`jj new @`** so `@` is an empty change on top of the branch tip, and when pushing, `jj git push --branch <bookmark>`). Prefer **`jj new` + `jj squash`** over **`jj edit`** when adjusting an existing revision (see **skill-jujutsu.md** §2); reserve `jj edit` mainly for conflict resolution (**skill-jujutsu.md** §12).
+- **Every** change to this repo (new file, edit, or delete) must result in a commit on a branch. **Default to git** (the repo is colocated): create a branch, `git add`, `git commit`, `git push -u origin <branch>` — never `master`. jj is also fine if you prefer it — see **skill-jujutsu.md** (`jj new`, `jj bookmark set`, **`jj new @`**, `jj git push --branch <bookmark>`; prefer **`jj new` + `jj squash`** over **`jj edit`** for amending past revisions, §2; `jj edit` mainly for conflict resolution, §12).
 - **One commit per logical change:**
   - One **new skill** → one commit.
   - One **update** to a skill (e.g. "add section on X") → one commit.
@@ -95,7 +95,7 @@ Agents may add to, create, correct, or remove content in this repo. Every such c
 ## 4. Branches: never push to master
 
 - **Do not push to the `master` branch.** Treat `master` as protected; all agent edits go on other branches.
-- Agents may **create and push to other branches**. In jujutsu terms: create a **bookmark** for your branch (e.g. `agent-skills/update-review-skill` or `agent-skills/new-skill-docker`), make your change and commit, move the bookmark to your new change, then **push that bookmark** with `jj git push --branch <bookmark>`.
+- Agents may **create and push to other branches**. Default (git): `git switch -c agent-skills/<desc>`, make your change, `git commit`, `git push -u origin agent-skills/<desc>`. (jj equivalent: create a **bookmark** `agent-skills/<desc>`, commit, move the bookmark to your change, then `jj git push --branch <bookmark>`.)
 - Use a **descriptive branch/bookmark name** so it’s clear what the change is (e.g. `agent-skills/fix-jira-acli`, `agent-skills/add-pr-checklist`). The human can then merge via PR or locally.
 - **This repo’s** bookmark names use the `agent-skills/...` prefix above — **not** the default `rasheedja/<ticket>/<desc>` pattern from **skill-jujutsu.md** (that default applies in other workspaces unless the user overrides).
 
@@ -110,8 +110,8 @@ Agents may add to, create, correct, or remove content in this repo. Every such c
 | Add to a skill | Edit the file; add section or example; commit with jj (one commit per logical change). |
 | New skill | Create `skill-<topic>.md` with same structure as others; commit. |
 | Fix/remove content | Edit or delete; keep references consistent; commit. |
-| Commit | Conventional commit: `type(scope): subject`; body with bullet points for details. Use **skill-jujutsu.md**: `jj new <parent> -m "message"`, edit, `jj bookmark set <bookmark> -r @`, then **`jj new @`** (empty working copy on top). Prefer **`jj new` + `jj squash`** over **`jj edit`** for amending past revisions (§2). |
-| Push | `jj git push --branch <bookmark>` — **never** push to `master`; use a separate bookmark. |
+| Commit | Conventional commit: `type(scope): subject`; body with bullet points for details. Default git: `git add` + `git commit` on a branch. (jj: see **skill-jujutsu.md** — `jj new`, `jj bookmark set`, **`jj new @`**, **`jj new` + `jj squash`** for amends.) |
+| Push | `git push -u origin <branch>` (or `jj git push --branch <bookmark>`) — **never** push to `master`; use a separate branch. |
 | Resolve jj merge/rebase conflicts | Use **skill-jujutsu.md** §12: `jj log` for `×` (conflict); `jj resolve --list -r <rev>` for paths; `jj edit <rev>`, fix markers (oldest first); repeat until no `(conflict)`; then leave `@` on an empty change (§2, §9b). |
 | Subagent review → main agent address | Use **skill-subagent-review-main-agent-address.md**: subagent reviews, main agent triages and makes changes, loop until no further comments; do not commit review files. |
 
@@ -119,4 +119,4 @@ Agents may add to, create, correct, or remove content in this repo. Every such c
 
 ## 6. Cross-reference: Jujutsu workflow
 
-For the full jujutsu workflow (new change, bookmark, **`jj new @`** after each finished commit, push, commit hash), and for **`jj new` + `jj squash`** vs **`jj edit`**, see **skill-jujutsu.md**. Use that skill whenever you are making commits or pushes in this repo (or in any jj repo).
+For the full jujutsu workflow (new change, bookmark, **`jj new @`** after each finished commit, push, commit hash), and for **`jj new` + `jj squash`** vs **`jj edit`**, see **skill-jujutsu.md**. Reach for jj only when you choose to commit via jj — **git is the default** for this repo (see §3).

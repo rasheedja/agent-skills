@@ -73,7 +73,7 @@ cd ../<REPO>-<STORY_KEY>
 
 Otherwise work in the existing clone and create the branch there.
 
-- **Branch (git)** or **bookmark (jj)** name must follow:
+- **Branch (git)** or **bookmark (jj)** name — **the repo's own convention takes precedence** (its `CLAUDE.md` / `AGENTS.md`, or a user instruction; e.g. realfi uses `feature/<jira-ticket>-<name>`). See **skill-jujutsu.md**. Only when the repo states none, use the personal default:
 
   **`rasheedja/$STORY_KEY/short-description`**
 

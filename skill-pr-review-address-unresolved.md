@@ -31,7 +31,7 @@ This skill describes a **single pass** over a PR: (1) check the PR for **unresol
 
 - For **each** unresolved thread, decide whether to **change code** or **reply only** (see skill-performing-reviews.md for how to evaluate).
 - **If you change code:**
-  - Make the change. You can do one commit per comment (skill-jujutsu.md: `jj new`, edit, `jj bookmark set`, **`jj new @`**, `jj git push`, then `jj log -r <branch> -T 'commit_id' -n 1` for the hash if `@` is the empty child).
+  - Make the change. You can do one commit per comment — git (default): edit, `git commit`, `git push`, `git rev-parse HEAD` for the hash. (jj: `jj new`, edit, `jj bookmark set`, **`jj new @`**, `jj git push`, then `jj log -r <branch> -T 'commit_id' -n 1` for the hash if `@` is the empty child — skill-jujutsu.md.)
   - Reply in the thread (skill-gh-pr-review-comments.md §4): POST with `body` and `in_reply_to` (parent comment’s numeric id). Include “Comment left by Cursor” (or agent), what you changed, and optionally the commit hash.
 - **If you only reply (no code change):** Reply in the same thread with your rationale (e.g. decline or defer); include “Comment left by Cursor” (or agent).
 - **Resolve the thread** (skill-gh-pr-review-comments.md §5): GraphQL `resolveReviewThread(input: { threadId: "<THREAD_ID>" })`.

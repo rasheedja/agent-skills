@@ -56,8 +56,8 @@ Optionally assign the ticket to the current user.
 
 From here, **follow skill-opus-subagent-workspace-flow.md end-to-end.** Don't re-describe those steps; execute them. In summary:
 
-1. Detect VCS (jj if `.jj/` present, else git).
-2. Create the isolated workspace (`jj workspace add` or `git worktree add`).
+1. Choose VCS: a **git worktree by default** (incl. colocated jj repos); a jj workspace only if the project specifically uses jj.
+2. Create the isolated workspace (`git worktree add` — or `jj workspace add` for jj-preferred projects).
 3. Create the bookmark/branch (standalone on `main` or stacked on the parent).
 4. Write `PLAN-<TICKET>.md` in the workspace root. The plan should:
    - Restate the goal (from your §2 assessment).
