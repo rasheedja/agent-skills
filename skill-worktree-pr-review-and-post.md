@@ -1,8 +1,10 @@
 # Skill: Reviewing someone else's PR in an isolated worktree and posting LLM-marked review comments
 
-This skill is the end-to-end workflow for reviewing a PR **you did not author** — check it out read-only in a dedicated git worktree, optionally fan out parallel subagent reviewers, spot-check the findings yourself, and (when the user approves) post them as a **single `COMMENT`-type review with inline comments**, each clearly marked as LLM/Claude-generated and categorized.
+This skill is the end-to-end workflow for reviewing a PR **you did not author** — check it out read-only in a dedicated git worktree, optionally fan out parallel subagent reviewers, spot-check the findings yourself, and (when the user approves) post them as a **single `COMMENT`-type review with inline comments**, each clearly marked as LLM-generated with the actual agent name and categorized.
 
 For **what to evaluate** in a review (correctness, idioms, tests), see **[skill-conducting-code-review.md](skill-conducting-code-review.md)**. For **reply/thread/resolve mechanics** and the agent-attribution principle, see **[skill-gh-pr-review-comments.md](skill-gh-pr-review-comments.md)** and **[skill-performing-reviews.md](skill-performing-reviews.md)**. For the **review→address loop on your own PR**, see **[skill-subagent-review-main-agent-address.md](skill-subagent-review-main-agent-address.md)** (this skill is the opposite direction: you are the reviewer, not the author).
+
+**Load references on demand:** Read the review-criteria skill for evaluation. Read posting/thread mechanics only when posting or replying is requested; do not reload unchanged skills on each follow-up. This repository uses root-level `skill-*.md` files, not only `SKILL.md` directories.
 
 **Prerequisites:** `gh` authenticated (`gh auth status`); `jq`; the target repo cloned locally.
 
@@ -69,14 +71,24 @@ Before reporting or posting, **verify the headline findings directly** — don't
 
 ---
 
+### Explain cause, reachability, and impact together
+
+For each material finding, give the trigger, a short concrete sequence, actual versus expected behavior, user/system impact, and a suggested fix with regression coverage. State what was reproduced and what was established only by inspection. A synthetic interleaving proves behavior, not production frequency: trace relevant callers, event ordering/retry guarantees, and deployed configuration before assigning urgency. Distinguish realistic recovery races from normal-path failures and avoid implying fund loss or duplicate execution without evidence.
+
+### Preserve continuity across review rounds
+
+Keep a small local review record outside tracked source: PR URL, reviewed head/base SHAs, worktree path, findings with stable IDs and thread URLs, exact test commands/results, and scope of posting authorization. Preserve useful reproduction code outside the checkout before removing temporary tests.
+
+When the author pushes fixes, inspect replies and the new head, compare the fix delta, and re-check each original request plus interactions introduced by the fix. Report addressed / partially addressed / outstanding with evidence; do not restart the full review or repost unchanged findings. If rebased, identify the equivalent reviewed commit rather than treating unrelated base changes as fixes. Reuse the clean review worktree and revalidate findings/anchors if the head changed.
+
 ## 5. Post findings as ONE `COMMENT` review (only after the user OKs)
 
-Default is to report in chat. **Post to GitHub only when the user asks.** Then create a single review — not scattered comments, not an approval.
+Default is to report in chat. **Post to GitHub only when the user asks.** Then create a single review — not scattered comments, not an approval. An explicit request to post the current findings is sufficient authorization; do not ask again. A later request only to assess fixes does not authorize posting new feedback. On authorized follow-ups, reply in the existing unresolved thread for the same issue; use new inline threads for distinct regressions. Keep the summary short and avoid repeating full inline explanations. Use applicable `suggestion` blocks for safe, localized edits; for changes outside the diff or design-level fixes, provide a clearly labelled patch or prose instead.
 
 **Rules:**
 
 - **Event `COMMENT`** — never `APPROVE`/`REQUEST_CHANGES`. You are the reviewer-of-record, not the approver.
-- **Mark every comment as LLM/Claude-generated** and **categorize** it. Put the marker at the **start** so it shows in notifications, e.g. a first bold line: `🤖 **Claude (LLM) review · Should fix** — <one-line>` (categories: `Should fix`, `Nit`, `Note`). The review **summary body** gets the same disclaimer + a category legend. (See skill-performing-reviews.md §3.2 for the attribution principle; here it's a fresh review, not a thread reply.)
+- **Mark every comment as LLM-generated with the actual agent name** and **categorize** it. Put the marker at the **start** so it shows in notifications, e.g. a first bold line: `🤖 **<AgentName> (LLM) review · Should fix** — <one-line>` (categories: `Should fix`, `Nit`, `Note`). The review **summary body** gets the same disclaimer + a category legend. (See skill-performing-reviews.md §3.2 for the attribution principle; here it's a fresh review, not a thread reply.)
 - **Inline comments must anchor to a line inside a diff hunk.** The `/reviews` API rejects the whole review if any comment targets a line not in the diff. **Check hunk ranges first**, and put findings on **unchanged** lines into the summary body instead.
 
   ```bash
@@ -117,8 +129,8 @@ Default is to report in chat. **Post to GitHub only when the user asks.** Then c
 ## 6. Branch protection & safety
 
 - Posting a review is fine, but **never push to or merge `main`**, never `git push --force` (see the target repo's CLAUDE.md / branch rules).
-- If your `gh` account isn't the PR author, the comment is still attributed to your account — the explicit "generated by Claude (LLM)" marker is what makes authorship honest. Keep it on every comment.
-- Reviewing/posting is outward-facing: confirm with the user before the first post.
+- If your `gh` account isn't the PR author, the comment is still attributed to your account — the explicit "generated by <AgentName> (LLM)" marker is what makes authorship honest. Keep it on every comment.
+- Reviewing/posting is outward-facing: require explicit authorization for the current feedback before posting; an existing request to post it satisfies this requirement.
 
 ---
 
