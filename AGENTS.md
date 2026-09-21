@@ -23,6 +23,7 @@ When a task could benefit from a skill (e.g. GitHub PRs, Jira, jujutsu, code rev
 - **By title:** Search for topic keywords in the first line or in `# Skill:` lines (e.g. grep for "jira", "PR", "review", "jujutsu"). That narrows down which file to open.
 - **By content:** Search inside the repo for phrases or concepts (e.g. grep for "jj new", "review comment", "bookmark set"). Prefer starting with a title/keyword search to get candidate files, then open those files or grep within them for the exact detail.
 - **Cross-references:** Many skills link to others (e.g. "see skill-gh-pr-review-comments.md"). Follow those links when a skill points you elsewhere.
+- **Jira-to-PR review:** Requests for `jira-to-pr-review` or "Jira GitHub to PR review" map to [skill-jira-to-pr-via-subagent.md](skill-jira-to-pr-via-subagent.md). It uses configurable orchestrator/implementor roles, with the orchestrator reviewing and the implementor making every correction.
 
 ### 1.3 Suggested workflow
 
