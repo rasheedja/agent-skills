@@ -2,7 +2,7 @@
 
 This repo (**agent-skills**) holds skill documents that agents should use when handling user tasks. Agents are also allowed and encouraged to **improve** these skills: add content, create new skills, and fix or remove incorrect or outdated content. This file explains how to **find** information in skills and how to **update** them (including commit and branch rules).
 
-**When making changes in any git/jj repo** (including this one), use **skill-commits-and-pre-commit-checks.md**: conventional commits, small logical commits, and running the project’s checks (Makefile, npm scripts, CI, etc.) before committing.
+**When making changes in any git/jj repo** (including this one), use **[commits-and-pre-commit-checks](.agents/skills/commits-and-pre-commit-checks/SKILL.md)**: conventional commits, small logical commits, and running the project’s checks (Makefile, npm scripts, CI, etc.) before committing.
 
 **Path to this repo:** `~/Documents/personal/git/agent-skills/` (full path: `/Users/junaid/Documents/personal/git/agent-skills/`).
 
@@ -14,23 +14,25 @@ When a task could benefit from a skill (e.g. GitHub PRs, Jira, jujutsu, code rev
 
 ### 1.1 List available skills
 
-- Skill files are named **`skill-<topic>.md`** (e.g. `skill-jujutsu.md`, `skill-gh-pr-review-comments.md`).
-- **List files:** List the repo directory or search for filenames matching `skill-*.md` to see all skills.
-- Use the **first line** of each file as a catalog: skills start with `# Skill: <Name> — <short description>`. Scanning titles helps you pick the right file.
+- Canonical skills live in **`.agents/skills/<name>/SKILL.md`**, a repository discovery location. Each has YAML `name` and `description` metadata; the directory and name must match.
+- List them with `rg --files --hidden .agents/skills -g SKILL.md`. Scan metadata descriptions to choose a skill, then read only the relevant instructions and references.
+- Invoke a loaded skill by name, for example: **“Use $jira-to-pr-review for WTB-2274 with you as the orchestrator and Luna High as the implementor.”** Available models and reasoning settings depend on the host runtime.
+- Root-level `skill-*.md` files are compatibility pointers for saved links. Edit the canonical files rather than duplicating instructions in the pointers.
+- Repository discovery applies when working in this repository. For use in unrelated projects, install the desired skill directories and their referenced sibling skills in the runtime's user skill directory. This layout change does not install or reload skills globally.
 
 ### 1.2 Find skills by topic
 
-- **By title:** Search for topic keywords in the first line or in `# Skill:` lines (e.g. grep for "jira", "PR", "review", "jujutsu"). That narrows down which file to open.
+- **By metadata/title:** Search `.agents/skills` for topic keywords in descriptions or in `# Skill:` lines (e.g. grep for "jira", "PR", "review", "jujutsu"). That narrows down which file to open.
 - **By content:** Search inside the repo for phrases or concepts (e.g. grep for "jj new", "review comment", "bookmark set"). Prefer starting with a title/keyword search to get candidate files, then open those files or grep within them for the exact detail.
-- **Cross-references:** Many skills link to others (e.g. "see skill-gh-pr-review-comments.md"). Follow those links when a skill points you elsewhere.
-- **Jira-to-PR review:** Requests for `jira-to-pr-review` or "Jira GitHub to PR review" map to [skill-jira-to-pr-via-subagent.md](skill-jira-to-pr-via-subagent.md). It uses configurable orchestrator/implementor roles, with the orchestrator reviewing and the implementor making every correction.
+- **Cross-references:** Many skills link to others (e.g. "see [gh-pr-review-comments](.agents/skills/gh-pr-review-comments/SKILL.md)"). Follow those links when a skill points you elsewhere.
+- **Jira-to-PR review:** Requests for `jira-to-pr-review` or "Jira GitHub to PR review" map to [jira-to-pr-review](.agents/skills/jira-to-pr-review/SKILL.md). It uses configurable orchestrator/implementor roles, with the orchestrator reviewing and the implementor making every correction.
 
 ### 1.3 Suggested workflow
 
 1. List or search **titles** to find candidate skills.
 2. **Open** the most likely file(s) and read the relevant sections.
 3. If you need a specific phrase or command, **grep** (or semantic search) in the repo for that phrase to find the right file and section.
-4. Use **in-file links** (e.g. "see skill-foo.md") to jump to related skills when the doc says so.
+4. Use **in-file links** (e.g. a sibling `../<name>/SKILL.md` link) to jump to related skills when the doc says so.
 
 ---
 
@@ -46,9 +48,9 @@ Agents may add to, create, correct, or remove content in this repo. Every such c
 
 ### 2.2 Create new skill files
 
-- For a new topic that doesn’t fit an existing skill, create **`skill-<topic>.md`** (e.g. `skill-docker-build.md`).
-- Use the same structure as existing skills: a first line `# Skill: <Name> — <short description>`, optional "Prerequisites" or "Scope", then numbered sections (e.g. `## 1. …`, `## 2. …`) with code blocks and examples where useful.
-- Cross-reference related skills by filename (e.g. "For PR comment mechanics, see **skill-gh-pr-review-comments.md**.").
+- For a new topic, create **`.agents/skills/<name>/SKILL.md`** with YAML `name` and a concise `description` explaining when to use it. Use lowercase letters, digits, and hyphens in names.
+- Use the same structure as existing skills: YAML metadata followed by `# Skill: <Name> — <short description>`, optional "Prerequisites" or "Scope", then numbered sections (e.g. `## 1. …`, `## 2. …`) with code blocks and examples where useful.
+- Within a canonical skill, cross-reference related skills using relative sibling links (`../<name>/SKILL.md`). Links from this root instructions file instead start with `.agents/skills/`.
 
 ### 2.3 Correct or clarify existing content
 
@@ -66,11 +68,11 @@ Agents may add to, create, correct, or remove content in this repo. Every such c
 
 ## 3. Commits: conventional commits and body
 
-- **Every** change to this repo (new file, edit, or delete) must result in a commit on a branch. **Default to git** (the repo is colocated): create a branch, `git add`, `git commit`, `git push -u origin <branch>` — never `master`. jj is also fine if you prefer it — see **skill-jujutsu.md** (`jj new`, `jj bookmark set`, **`jj new @`**, `jj git push --branch <bookmark>`; prefer **`jj new` + `jj squash`** over **`jj edit`** for amending past revisions, §2; `jj edit` mainly for conflict resolution, §12).
+- **Every** change to this repo (new file, edit, or delete) must result in a commit on a branch. **Default to git** (the repo is colocated): create a branch, `git add`, `git commit`, `git push -u origin <branch>` — never `master`. jj is also fine if you prefer it — see **[jujutsu](.agents/skills/jujutsu/SKILL.md)** (`jj new`, `jj bookmark set`, **`jj new @`**, `jj git push --branch <bookmark>`; prefer **`jj new` + `jj squash`** over **`jj edit`** for amending past revisions, §2; `jj edit` mainly for conflict resolution, §12).
 - **One commit per logical change:**
   - One **new skill** → one commit.
   - One **update** to a skill (e.g. "add section on X") → one commit.
-  - **Multiple edits in one commit** are fine when they are part of the same logical change (e.g. "fix typos in skill-jira-acli.md" touching several lines, or "update Jira skill: add daily-summary and fix acli examples").
+  - **Multiple edits in one commit** are fine when they are part of the same logical change (e.g. "fix typos in [jira-acli](.agents/skills/jira-acli/SKILL.md)" touching several lines, or "update Jira skill: add daily-summary and fix acli examples").
 - **Use conventional commits.** Format: **`<type>(<scope>): <short description>`**
   - **Type:** Use `docs` for skill docs (new skill, add/change/remove content), `fix` for corrections, `refactor` for restructuring without changing meaning. For this repo, `docs` will be most common.
   - **Scope:** Use `skills` (e.g. `docs(skills): ...`). Optionally add the skill name: `docs(skills/jira-acli): ...`.
@@ -87,8 +89,8 @@ Agents may add to, create, correct, or remove content in this repo. Every such c
     ```
     docs(skills): new skill for Jira daily summary
 
-    - Add skill-jira-daily-summary.md with acli commands and output format
-    - Cross-reference skill-jira-acli.md for auth
+    - Add .agents/skills/jira-daily-summary/SKILL.md with acli commands and output format
+    - Cross-reference jira-acli for auth
     ```
 
 ---
@@ -98,7 +100,7 @@ Agents may add to, create, correct, or remove content in this repo. Every such c
 - **Do not push to the `master` branch.** Treat `master` as protected; all agent edits go on other branches.
 - Agents may **create and push to other branches**. Default (git): `git switch -c agent-skills/<desc>`, make your change, `git commit`, `git push -u origin agent-skills/<desc>`. (jj equivalent: create a **bookmark** `agent-skills/<desc>`, commit, move the bookmark to your change, then `jj git push --branch <bookmark>`.)
 - Use a **descriptive branch/bookmark name** so it’s clear what the change is (e.g. `agent-skills/fix-jira-acli`, `agent-skills/add-pr-checklist`). The human can then merge via PR or locally.
-- **This repo’s** bookmark names use the `agent-skills/...` prefix above — **not** the default `rasheedja/<ticket>/<desc>` pattern from **skill-jujutsu.md** (that default applies in other workspaces unless the user overrides).
+- **This repo’s** bookmark names use the `agent-skills/...` prefix above — **not** the default `rasheedja/<ticket>/<desc>` pattern from **[jujutsu](.agents/skills/jujutsu/SKILL.md)** (that default applies in other workspaces unless the user overrides).
 
 ---
 
@@ -106,18 +108,18 @@ Agents may add to, create, correct, or remove content in this repo. Every such c
 
 | Goal | Action |
 |------|--------|
-| Commits in any git/jj repo | Use **skill-commits-and-pre-commit-checks.md**: conventional commits, small commits, run project checks before committing. |
-| Find a skill | List `skill-*.md`; search titles or grep for topic/phrase; follow in-file links. |
+| Commits in any git/jj repo | Use **[commits-and-pre-commit-checks](.agents/skills/commits-and-pre-commit-checks/SKILL.md)**: conventional commits, small commits, run project checks before committing. |
+| Find a skill | List `.agents/skills/*/SKILL.md`; search metadata/titles; follow relative links. |
 | Add to a skill | Edit the file; add section or example; commit with jj (one commit per logical change). |
-| New skill | Create `skill-<topic>.md` with same structure as others; commit. |
+| New skill | Create `.agents/skills/<name>/SKILL.md` with name/description metadata; commit. |
 | Fix/remove content | Edit or delete; keep references consistent; commit. |
-| Commit | Conventional commit: `type(scope): subject`; body with bullet points for details. Default git: `git add` + `git commit` on a branch. (jj: see **skill-jujutsu.md** — `jj new`, `jj bookmark set`, **`jj new @`**, **`jj new` + `jj squash`** for amends.) |
+| Commit | Conventional commit: `type(scope): subject`; body with bullet points for details. Default git: `git add` + `git commit` on a branch. (jj: see **[jujutsu](.agents/skills/jujutsu/SKILL.md)** — `jj new`, `jj bookmark set`, **`jj new @`**, **`jj new` + `jj squash`** for amends.) |
 | Push | `git push -u origin <branch>` (or `jj git push --branch <bookmark>`) — **never** push to `master`; use a separate branch. |
-| Resolve jj merge/rebase conflicts | Use **skill-jujutsu.md** §12: `jj log` for `×` (conflict); `jj resolve --list -r <rev>` for paths; `jj edit <rev>`, fix markers (oldest first); repeat until no `(conflict)`; then leave `@` on an empty change (§2, §9b). |
-| Subagent review → main agent address | Use **skill-subagent-review-main-agent-address.md**: subagent reviews, main agent triages and makes changes, loop until no further comments; do not commit review files. |
+| Resolve jj merge/rebase conflicts | Use **[jujutsu](.agents/skills/jujutsu/SKILL.md)** §12: `jj log` for `×` (conflict); `jj resolve --list -r <rev>` for paths; `jj edit <rev>`, fix markers (oldest first); repeat until no `(conflict)`; then leave `@` on an empty change (§2, §9b). |
+| Subagent review → main agent address | Use **[subagent-review-main-agent-address](.agents/skills/subagent-review-main-agent-address/SKILL.md)**: subagent reviews, main agent triages and makes changes, loop until no further comments; do not commit review files. |
 
 ---
 
 ## 6. Cross-reference: Jujutsu workflow
 
-For the full jujutsu workflow (new change, bookmark, **`jj new @`** after each finished commit, push, commit hash), and for **`jj new` + `jj squash`** vs **`jj edit`**, see **skill-jujutsu.md**. Reach for jj only when you choose to commit via jj — **git is the default** for this repo (see §3).
+For the full jujutsu workflow (new change, bookmark, **`jj new @`** after each finished commit, push, commit hash), and for **`jj new` + `jj squash`** vs **`jj edit`**, see **[jujutsu](.agents/skills/jujutsu/SKILL.md)**. Reach for jj only when you choose to commit via jj — **git is the default** for this repo (see §3).
