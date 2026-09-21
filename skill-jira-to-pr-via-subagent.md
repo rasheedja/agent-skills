@@ -1,125 +1,42 @@
-# Skill: Jira ticket → draft PR, orchestrated via the subagent workspace flow
+# Skill: Jira-to-PR review — orchestrate implementation, review, and deliver a draft PR
 
-This skill is the end-to-end orchestration for "take a Jira ticket, hand it off to an Opus subagent, and come back with a draft PR." It doesn't describe the implementation mechanics itself — for that, it **delegates to skill-opus-subagent-workspace-flow.md**. Use this skill when the user asks something like *"pick up TICKET-123 and work on it in the background"* or *"spin up a subagent on TICKET-456 and open a draft PR"*.
+Use this skill for “Jira to PR review”, “Jira GitHub to PR review”, or “jira-to-pr-review”: take a Jira ticket through investigation, a remediation plan, delegated implementation, orchestrator review, corrections, verification, and a draft PR. The ticket key or URL and the implementor selection are enough; the user need not repeat the workflow.
 
-If the user wants you to implement the ticket yourself (no subagent), use **skill-jira-story-to-pr-workflow.md** instead — that's the direct-implementation flow.
+Example: **“Use jira-to-pr-review for WTB-2274 with you as the orchestrator and Luna High as the implementor.”** The roles are configurable; this example does not establish a default model.
 
-**Prerequisites:**
+For direct implementation without a separate implementor, use [skill-jira-story-to-pr-workflow.md](skill-jira-story-to-pr-workflow.md). This workflow does not use the reverse arrangement in which a subagent reviews and the main agent makes the fixes.
 
-- **skill-jira-acli.md** or an equivalent Jira tool (MCP Atlassian tools, `acli`, etc.) — fetching the ticket, reading its status, transitioning it.
-- **skill-opus-subagent-workspace-flow.md** — the core implementation flow this skill delegates to.
-- **skill-jira-story-to-pr-workflow.md** §§1–4 — the "read, evaluate, transition" front half is the same; this skill reuses those steps.
-- **skill-commits-and-pre-commit-checks.md** — conventional commits, project checks.
-- **skill-pr-title-and-description.md** — PR title/body conventions.
+## 1. Resolve roles and scope
 
-**Output contract:** when the flow terminates, your reply to the user **must include both** the Jira ticket link and the draft PR URL.
+- **Orchestrator:** the current agent unless the user specifies another available agent. Owns investigation, planning, delegation, direct review, verification, VCS operations, and PR delivery. If another agent is named, actually hand orchestration to that agent using the available runtime; do not merely relabel the current agent.
+- **Implementor:** the agent/model and reasoning level selected by the user, or already established for this task. Makes all implementation changes, including tests, documentation, generated files, and review corrections. Do not silently switch models or make product-code fixes as the orchestrator.
+- Resolve shorthand such as “Luna High” against the runtime's available model identifiers and reasoning settings, and explicitly apply both when creating an implementor session or its replacement. Continue correction rounds in that configured session when the runtime preserves its settings; a continuation tool need not expose model fields. Verify the session choice rather than assuming inherited defaults are right. Ask a concise question if the implementor is unspecified, unavailable, or ambiguous; investigate independently while awaiting the answer, but do not dispatch to a substitute.
+- Use native subagents or equivalent delegated execution, not unrelated user-visible tasks. If the requested roles cannot be supported, explain the limitation and ask for an alternative.
+- Invocation requests the whole workflow through a draft PR. Do not insert routine approval checkpoints for planning, worktree creation, corrections, committing, pushing, or draft creation. Ask only for material unresolved intent, unavailable role choices, or an actual permission requirement. Honor Plan mode or other execution restrictions: a skill cannot override them.
 
----
+## 2. Read the ticket and investigate current code
 
-## 1. Get the ticket
+Fetch the summary, description, acceptance criteria, status, comments, and relevant linked issues. Prefer the connected Jira tools; use [skill-jira-acli.md](skill-jira-acli.md) only when CLI mechanics are needed.
 
-The user will give you a ticket key (e.g. `PROJ-123`) or a Jira URL. Fetch the ticket's:
+Locate the repository, read its instructions, and compare the ticket against current upstream code before designing the change. An audit's historical description may no longer match the implementation. Trace affected callers, duplicated clients, data access, generated bindings, and relevant tests. Resolve discoverable facts through inspection; ask about product decisions that cannot be inferred safely.
 
-- **Summary** and **description** (requirements, acceptance criteria).
-- **Status** (so you know what transition is needed).
-- **Comments** (often contain clarifying context or constraints).
-- **Linked tickets** (blockers, parents — relevant if this is a stacked PR).
+Produce a concise assessment of the issue, present behavior, intended outcome, scope, and meaningful compatibility risks. Check whether linked blockers really prevent progress; do not abandon independent work just because an issue has a blocked label. When proceeding, transition the ticket to its actual in-progress equivalent if needed, using the available transition list. Leave an already-in-progress ticket alone; do not assign it or post comments unless requested.
 
-Use the project's Jira integration — MCP Atlassian tools if available, otherwise `acli jira workitem view` (see **skill-jira-acli.md**). For ADF-rich descriptions, request markdown or ADF as appropriate.
+## 3. Plan and execute the delegated workflow
 
----
+Follow [skill-delegated-implementation-review.md](skill-delegated-implementation-review.md). In particular:
 
-## 2. Understand and evaluate it
+1. Create a dedicated worktree from freshly fetched upstream (or the explicit parent for a stacked PR), preserving the original checkout.
+2. Plan the behavior change, compatibility, ownership, and verification before implementation. Retain the plan as scratch material outside the product commit.
+3. Delegate bounded implementation tasks to the chosen implementor. Parallelize only independent work with disjoint file ownership.
+4. Review the actual diff and verification evidence. Return actionable findings to the responsible implementor, then review the corrections. Repeat until no actionable in-scope findings remain.
+5. Run the relevant final checks, resolve fixable environment problems, and distinguish passing checks from blocked checks.
+6. Commit and push the reviewed branch; create and verify a draft PR. Do not merge or deploy as part of this skill.
 
-Before touching any code, decide whether the ticket is **actionable**.
+Read [skill-commits-and-pre-commit-checks.md](skill-commits-and-pre-commit-checks.md) for repository checks/commits and [skill-pr-title-and-description.md](skill-pr-title-and-description.md) for PR presentation. Load only references needed for the current step. Their general guidance does not change the role ownership defined here.
 
-- **Clarity:** requirements and acceptance criteria specific enough to implement? If vague or contradictory, either ask the user or note the gaps in your evaluation.
-- **Scope:** one logical change (one PR), or should it be split? Prefer one ticket → one PR.
-- **Dependencies:** any blockers? If the ticket depends on another in-flight PR, plan to stack (see **skill-opus-subagent-workspace-flow.md §2**). If it's truly blocked, stop and report to the user.
-- **Feasibility:** quickly map the ticket to the codebase. Identify the files/modules the change should touch. If the target is unclear, grep/search before committing to a plan — a subagent can't compensate for a vague brief.
+## 4. Deliver
 
-**Produce a short assessment** (one paragraph) you can either report to the user or paste into your plan file later. Include: the summary, the scope decision, any risks, and "ready to implement" or "needs clarification on X".
+Return the **Jira link and draft PR URL first**, followed by a brief description of the change and verification status. Disclose material blocked checks, compatibility changes, or remaining external dependencies; never describe unrun tests as passing. Preserve the worktree for follow-up and confirm it is clean.
 
-If the ticket isn't ready, **stop here and report back**. Don't spawn a subagent on ambiguous work.
-
----
-
-## 3. Transition the ticket to In Progress
-
-Once you've decided to proceed, move the ticket to the project's "in progress" equivalent (names vary: "In Progress", "In Development", "Dev in Progress"). Fetch the available transitions, pick the right one, apply it.
-
-Optionally assign the ticket to the current user.
-
----
-
-## 4. Hand off to the subagent workspace flow
-
-From here, **follow skill-opus-subagent-workspace-flow.md end-to-end.** Don't re-describe those steps; execute them. In summary:
-
-1. Choose VCS: a **git worktree by default** (incl. colocated jj repos); a jj workspace only if the project specifically uses jj.
-2. Create the isolated workspace (`git worktree add` — or `jj workspace add` for jj-preferred projects).
-3. Create the bookmark/branch (standalone on `main` or stacked on the parent).
-4. Write `PLAN-<TICKET>.md` in the workspace root. The plan should:
-   - Restate the goal (from your §2 assessment).
-   - List the files to edit with absolute paths.
-   - Break work into ordered steps.
-   - Call out "Out of scope" items so the subagent doesn't drift.
-   - Specify verification commands (build, tests, lint).
-5. Spawn the Opus subagent with a self-contained prompt (scope, workspace lock, no VCS, plan path, report format).
-6. On return: review the diff directly, triage, run project checks.
-7. Move the plan out of the workspace to `/tmp/claude/<TICKET>/`.
-8. Commit, push the bookmark/branch, and open the draft PR with `gh pr create --draft`.
-9. Leave the workspace clean (`jj new @` for jj; nothing needed for git).
-
-Refer to **skill-opus-subagent-workspace-flow.md** for the exact commands in each step.
-
----
-
-## 5. Report to the user
-
-Your final reply **must** contain, at minimum:
-
-- **Ticket:** its key and URL (e.g. `PROJ-123: https://<site>.atlassian.net/browse/PROJ-123`).
-- **Draft PR:** its URL (e.g. `https://github.com/<owner>/<repo>/pull/<num>`).
-- **What the subagent did** (one or two bullets summarising the diff — files touched, key decisions).
-- **Verification status** (did the build/tests pass? any known deviations from the plan?).
-
-Keep it terse. The user wants the two links first; everything else is supporting detail.
-
-**Example reply shape:**
-
-```
-Launched subagent on PROJ-123. Done.
-
-- Ticket: https://acme.atlassian.net/browse/PROJ-123
-- Draft PR: https://github.com/acme/widgets/pull/482
-
-Subagent changes:
-- Edited `src/foo.go` to add the new field; updated two call sites.
-- Added a test in `src/foo_test.go` covering the new branch.
-
-Verification: `go build ./...` and `go test ./...` both green.
-```
-
----
-
-## 6. End-to-end checklist
-
-1. Fetch the ticket (summary, description, status, comments, links).
-2. Evaluate: clear, unblocked, single-PR scope, feasible? If not, stop and report.
-3. Transition to "In Progress" / "In Development" (or whatever your board calls it).
-4. Delegate the rest to **skill-opus-subagent-workspace-flow.md**:
-   - Workspace, branch/bookmark, plan, subagent, review, commit, push, draft PR.
-5. Reply to the user with **both** the ticket link and the draft PR URL, plus a short summary.
-
----
-
-## References
-
-| Topic | Skill |
-|-------|-------|
-| Ticket fetch, transition, conventions | **skill-jira-acli.md**, **skill-jira-story-to-pr-workflow.md** |
-| Workspace, subagent delegation, push, draft PR | **skill-opus-subagent-workspace-flow.md** |
-| Conventional commits, pre-commit checks | **skill-commits-and-pre-commit-checks.md** |
-| PR title/description format | **skill-pr-title-and-description.md** |
-| Subagent review loop, parallel subagents, background-agent stall | **skill-subagent-review-main-agent-address.md** |
+If a genuine blocker prevents safe completion, report the concrete blocker, completed work, and smallest missing input or access. Do not claim the review is complete while actionable findings remain.

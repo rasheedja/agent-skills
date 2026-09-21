@@ -2,6 +2,8 @@
 
 This skill describes how to take a Jira story (or task), critically evaluate it, verify it against the codebase, move it to In Progress, implement it in a TDD style, and open a draft PR with an appropriate title and description—giving the user the PR link. It covers both **git** and **jujutsu (jj)** workflows and uses branch/bookmark naming `rasheedja/$STORY_KEY/short-description`.
 
+For an orchestrator that reviews a separately selected implementor's work, use [skill-jira-to-pr-via-subagent.md](skill-jira-to-pr-via-subagent.md), also called **jira-to-pr-review**. That workflow keeps implementation and all corrections with the selected implementor.
+
 **Prerequisites:** **skill-jira-acli.md** (Jira via `acli`), **skill-commits-and-pre-commit-checks.md** (conventional commits, pre-commit checks), **skill-jujutsu.md** (if using jj), and **skill-pr-title-and-description.md** (PR title/body). For opening a PR you need `gh` (GitHub CLI) or equivalent.
 
 ---
