@@ -1,11 +1,11 @@
 ---
 name: worktree-pr-review-and-post
-description: "Review another author's PR in an isolated read-only worktree with parallel reviewers, then obtain approval before posting one attributed GitHub COMMENT review."
+description: "Review another author's PR in an isolated read-only worktree with parallel reviewers, then post one attributed GitHub review — COMMENT by default, or APPROVE/REQUEST_CHANGES only when the operator explicitly authorizes that event."
 ---
 
 # Skill: Reviewing someone else's PR in an isolated worktree and posting LLM-marked review comments
 
-This skill is the end-to-end workflow for reviewing a PR **you did not author** — check it out read-only in a dedicated git worktree, optionally fan out parallel subagent reviewers, spot-check the findings yourself, and (when the user approves) post them as a **single `COMMENT`-type review with inline comments**, each clearly marked as LLM-generated with the actual agent name and categorized.
+This skill is the end-to-end workflow for reviewing a PR **you did not author** — check it out read-only in a dedicated git worktree, optionally fan out parallel subagent reviewers, spot-check the findings yourself, and (when the user approves) post them as a **single review with inline comments**, each clearly marked as LLM-generated with the actual agent name and categorized. The review event defaults to **`COMMENT`**; **`APPROVE`/`REQUEST_CHANGES` are used only when the operator explicitly authorizes that event** (see §5).
 
 For **what to evaluate** in a review (correctness, idioms, tests), see **[conducting-code-review](../conducting-code-review/SKILL.md)**. For **reply/thread/resolve mechanics** and the agent-attribution principle, see **[gh-pr-review-comments](../gh-pr-review-comments/SKILL.md)** and **[performing-reviews](../performing-reviews/SKILL.md)**. For the **review→address loop on your own PR**, see **[subagent-review-main-agent-address](../subagent-review-main-agent-address/SKILL.md)** (this skill is the opposite direction: you are the reviewer, not the author).
 
@@ -86,13 +86,16 @@ Keep a small local review record outside tracked source: PR URL, reviewed head/b
 
 When the author pushes fixes, inspect replies and the new head, compare the fix delta, and re-check each original request plus interactions introduced by the fix. Report addressed / partially addressed / outstanding with evidence; do not restart the full review or repost unchanged findings. If rebased, identify the equivalent reviewed commit rather than treating unrelated base changes as fixes. Reuse the clean review worktree and revalidate findings/anchors if the head changed.
 
-## 5. Post findings as ONE `COMMENT` review (only after the user OKs)
+## 5. Post findings as ONE review (default `COMMENT`; approve/reject only on explicit authorization)
 
-Default is to report in chat. **Post to GitHub only when the user asks.** Then create a single review — not scattered comments, not an approval. An explicit request to post the current findings is sufficient authorization; do not ask again. A later request only to assess fixes does not authorize posting new feedback. On authorized follow-ups, reply in the existing unresolved thread for the same issue; use new inline threads for distinct regressions. Keep the summary short and avoid repeating full inline explanations. Use applicable `suggestion` blocks for safe, localized edits; for changes outside the diff or design-level fixes, provide a clearly labelled patch or prose instead.
+Default is to report in chat. **Post to GitHub only when the user asks.** Then create a single review — not scattered comments. The event defaults to `COMMENT`; `APPROVE`/`REQUEST_CHANGES` require an explicit authorization for that event (see the first rule below). An explicit request to post the current findings authorizes a `COMMENT` review; do not ask again for that. A later request only to assess fixes does not authorize posting new feedback. On authorized follow-ups, reply in the existing unresolved thread for the same issue; use new inline threads for distinct regressions. Keep the summary short and avoid repeating full inline explanations. Use applicable `suggestion` blocks for safe, localized edits; for changes outside the diff or design-level fixes, provide a clearly labelled patch or prose instead.
 
 **Rules:**
 
-- **Event `COMMENT`** — never `APPROVE`/`REQUEST_CHANGES`. You are the reviewer-of-record, not the approver.
+- **Event: default `COMMENT`.** Do **not** submit `APPROVE` or `REQUEST_CHANGES` on your own initiative, and do not infer authorization from a generic "post the review" request — that authorizes `COMMENT` only. Submit `APPROVE`/`REQUEST_CHANGES` **only when the operator explicitly authorizes that specific event** (e.g. "approve the PR", "request changes"). When they do:
+  - State the consequence first, in case they don't realize it: an LLM-authored approval is attributed to the operator's `gh` account and **counts toward branch protection regardless of the in-body LLM marker**; `REQUEST_CHANGES` blocks the merge. Surface this and let them confirm.
+  - Record the authorization in the review body, e.g. a first line: `🤖 **<AgentName> (LLM) — <APPROVE|REQUEST_CHANGES>, submitted on the explicit authorization of the human account owner (<login>).**`
+  - Never submit an approving or blocking review silently, and never merge/push as part of it.
 - **Mark every comment as LLM-generated with the actual agent name** and **categorize** it. Put the marker at the **start** so it shows in notifications, e.g. a first bold line: `🤖 **<AgentName> (LLM) review · Should fix** — <one-line>` (categories: `Should fix`, `Nit`, `Note`). The review **summary body** gets the same disclaimer + a category legend. (See [performing-reviews](../performing-reviews/SKILL.md) §3.2 for the attribution principle; here it's a fresh review, not a thread reply.)
 - **Inline comments must anchor to a line inside a diff hunk.** The `/reviews` API rejects the whole review if any comment targets a line not in the diff. **Check hunk ranges first**, and put findings on **unchanged** lines into the summary body instead.
 
@@ -117,7 +120,7 @@ Default is to report in chat. **Post to GitHub only when the user asks.** Then c
   gh api --method POST /repos/<OWNER/REPO>/pulls/<N>/reviews --input payload.json \
     --jq '{id, state, html_url}'
   ```
-  (Multi-line anchors: add `start_line` alongside `line`. `side:"RIGHT"` = the new version of the file.)
+  (Multi-line anchors: add `start_line` alongside `line`. `side:"RIGHT"` = the new version of the file. `event` is `"COMMENT"` by default — set it to `"APPROVE"`/`"REQUEST_CHANGES"` only when the operator has explicitly authorized that event.)
 
 - **Verify the inline comments landed** (a review can post with fewer comments than intended if some were dropped):
 
@@ -134,6 +137,7 @@ Default is to report in chat. **Post to GitHub only when the user asks.** Then c
 ## 6. Branch protection & safety
 
 - Posting a review is fine, but **never push to or merge `main`**, never `git push --force` (see the target repo's CLAUDE.md / branch rules).
+- **Approval/rejection is a branch-protection event.** An `APPROVE` counts as a formal review toward a protected branch even though the body is LLM-marked, and `REQUEST_CHANGES` blocks the merge. Use them only on the operator's explicit, informed authorization (§5) — never as a side effect of posting findings.
 - If your `gh` account isn't the PR author, the comment is still attributed to your account — the explicit "generated by <AgentName> (LLM)" marker is what makes authorship honest. Keep it on every comment.
 - Reviewing/posting is outward-facing: require explicit authorization for the current feedback before posting; an existing request to post it satisfies this requirement.
 
@@ -160,8 +164,9 @@ git branch -D pr-<N>
 | Isolate | `git fetch origin pull/<N>/head:pr-<N>` → `git worktree add ../<repo>-pr-<N> pr-<N>`; record `merge-base`; git-only |
 | Review | subagent(s): read-only, diff vs merge-base, tailored checklist, verify-not-assert, BLOCKING/SHOULD-FIX/NIT + `file:line` |
 | Spot-check | reproduce headline claims yourself; correct overstatements |
-| Post | one `COMMENT` review via `jq` + `POST /pulls/<N>/reviews`; LLM-marked + categorized; anchor to diff hunks; verify landed |
-| Never | `APPROVE`/`REQUEST_CHANGES`; push/merge `main`; post without user OK |
+| Post | one review via `jq` + `POST /pulls/<N>/reviews`; event `COMMENT` by default; LLM-marked + categorized; anchor to diff hunks; verify landed |
+| Approve/reject | `APPROVE`/`REQUEST_CHANGES` only on explicit operator authorization for that event; note it counts toward branch protection; never inferred |
+| Never | push/merge `main`; post without user OK; approve/reject on your own initiative |
 | Clean up | `git worktree remove --force` + `git branch -D pr-<N>`; leave the user's own worktrees |
 
 ---
