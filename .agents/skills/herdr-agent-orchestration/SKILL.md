@@ -14,9 +14,9 @@ Tools: `herdr_layout` (tabs and panes), `herdr_agent` (agent lifecycle: start, p
 Create a tab per agent so the operator can find it, then start the agent in that tab's root pane:
 
 ```js
-const tab = await tools.herdr_layout({action: "tab_create", cwd: WORKTREE, label: "wtb1234-impl"});
+const tab = await tools.herdr_layout({action: "tab_create", cwd: WORKTREE, label: "abc123-impl"});
 const pane = tab.match(/root pane (\S+)/)[1];
-await tools.herdr_agent({action: "start", kind: "pi", pane, name: "wtb1234-impl",
+await tools.herdr_agent({action: "start", kind: "pi", pane, name: "abc123-impl",
   agentArgs: ["--model", "<provider/model>", "--thinking", "high"]});
 ```
 
@@ -36,7 +36,7 @@ for (let i = 0; i < 20; i++) {
     await tools.herdr_pane({action: "send_keys", pane, keys: ["down", "down", "enter"]}); // "trust"
     continue;
   }
-  if (/<model-name-fragment>/.test(screen)) break;          // e.g. /deepseek-flash|sonnet/
+  if (/<model-name-fragment>/.test(screen)) break;          // a fragment of the model id shown in the banner
   await tools.herdr_pane({action: "wait_output", pane, match: "Trust project folder|<model-name-fragment>",
     regex: true, timeout: 5000}).catch(() => {});
 }
