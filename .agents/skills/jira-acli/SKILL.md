@@ -62,6 +62,8 @@ acli jira workitem search --jql "<JQL>" [options]
 | `--csv` | Output CSV |
 | `--web` | Open search in browser |
 
+`--fields` only accepts some fields. `created`, for example, is refused (`✗ Error: field 'created' is not allowed`). Drop the field, or sort with `ORDER BY` instead. For a full-text search, use `text ~ "term"` in the JQL.
+
 **Useful JQL patterns:**
 
 - **My issues updated today:**  
@@ -123,11 +125,16 @@ acli jira workitem view PP12PB-599 --fields "key,summary,status,updated,comment"
 ## 5. Work item comments
 
 ```bash
-acli jira workitem comment list <KEY>   # List comments on an issue
-acli jira workitem comment create <KEY> --comment "Your text"
-acli jira workitem comment update <KEY> <COMMENT_ID> --comment "Updated text"
-acli jira workitem comment delete <KEY> <COMMENT_ID>
+acli jira workitem comment list --key <KEY>                      # List comments on an issue
+acli jira workitem comment create --key <KEY> --body "Your text"
+acli jira workitem comment create --key <KEY> --body-file comment.json   # plain text or ADF JSON
+acli jira workitem comment update --help                         # flags for editing a comment
+acli jira workitem comment delete --help
 ```
+
+- **Rich comments:** write ADF JSON (a `{"type":"doc","version":1,"content":[…]}` with `paragraph`, `bulletList`/`listItem`, `rule`, and `text` nodes carrying `marks` such as `strong`, `em` or `link`) to a file, and pass `--body-file`. Build it with a short script rather than by hand. The tool reports `✓ Comment on work item <KEY> has been successfully added`.
+- **acli cannot upload attachments** (`attachment` only has `list` and `delete`), and there is no flag to mention a user. For a comment with images or `@mentions`, upload through the operator's logged-in browser, then post wiki markup through the REST API from that page: `!file.png|width=900!` for images, `[~accountid:<id>]` for mentions, `h3.` headings, `*bold*`, `#` numbered lists. `PUT /rest/api/2/issue/<KEY>/comment/<id>` edits a comment. See [chrome-devtools-browser-driving](../chrome-devtools-browser-driving/SKILL.md) §6–7. Find account IDs in `workitem view <KEY> --json` (`fields.reporter.accountId`, `fields.assignee.accountId`).
+- **Reading tickets for an agent:** `acli jira workitem view <KEY> --fields summary,status,assignee,reporter,priority,parent,issuelinks,description,comment,attachment --json`. Then flatten the ADF to text with a small script that marks images as `[IMAGE <alt>]`, so you know which screenshots to fetch.
 
 - **List comments:** Use when you need to see who commented and when (e.g. to find "comments I added today"). The search API does not filter by "commented by currentUser()" in standard JQL, so listing comments per issue is the way to attribute them.
 
@@ -152,7 +159,7 @@ This rule applies regardless of which Jira interface the LLM uses (CLI, MCP, RES
 ## 6. Other useful work item commands
 
 - **Transition (change status):**  
-  `acli jira workitem transition <KEY> --transition "Done"` (or transition name/id).
+  `acli jira workitem transition --key <KEY> --status "Ready for Testing" --yes`. Confirm afterwards with `workitem view <KEY> --fields status --json`. In delivery workflows, move a ticket only **after** the PR merge is confirmed.
 - **Assign:**  
   `acli jira workitem assign <KEY> --assignee <user>`.
 - **Edit:**  
