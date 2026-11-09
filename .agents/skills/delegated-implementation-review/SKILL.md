@@ -85,7 +85,8 @@ These practices held up across a run of 20+ tickets with pane-hosted implementor
   - its own Postgres or port if it runs DB tests, stopped afterwards;
   - no real-cloud writes, keys or `.env`;
   - the report must give real numbers for every check, with the type check run **last**;
-  - list deviations and open concerns.
+  - list deviations and open concerns, and **every behaviour change outside the ticket's scope**. A report once called a shared page "unchanged" after a refactor that changed one of its messages; the reviewer caught it, the report didn't.
+- **Refactors that share code between pages: move it, don't copy it.** Say so in the brief: extract the logic into one module both callers use, keep caller-specific parts as options or slots, require the existing tests of the original caller to pass with their assertions unedited, and tell the implementor to stop and report if a clean move isn't possible rather than duplicate it. Ask the reviewer to compare the moved code line by line with `git show origin/main:<original file>`; that comparison is what finds the small regressions.
 - **A separate reviewer worktree.** Detach it at the PR head, install dependencies, and make it read-only for the reviewer. Before each re-review, move it to the new head (`git fetch && git checkout --detach origin/<branch>`).
 - **The first line of every review is the reviewed commit** (`git log -1 --format=%h`). Reviewers have reviewed stale heads; reject a review whose first line doesn't match the pushed head.
 - **Re-review only after the push lands.** Check `git ls-remote origin refs/heads/<branch>` matches the local head first. In the re-review prompt, name the new head, the previous head, and what the delta is meant to fix, and ask the reviewer to confirm no test was weakened.
@@ -103,10 +104,15 @@ These practices held up across a run of 20+ tickets with pane-hosted implementor
 4. **To exonerate the PR, run the same suite locally on the PR head and on main**, with network access to the external service cut (e.g. a dead `HTTPS_PROXY`). If both pass with no live calls, the PR isn't the cause.
 5. **Re-run failed jobs** (`gh run rerun <run> --failed`) a bounded number of times: two is enough. Then ask the operator.
 6. **Secret-scan false positives:** rename the identifier that trips the rule. In repos that use commit-pinned fingerprints, also add a commit-pinned `.gitleaksignore` entry for the already-pushed commit; never add a path-wide allowlist.
+   - The scanner's log is redacted, so get the findings from its report artifact: `gh api repos/<o>/<r>/actions/runs/<run>/artifacts`, then `gh run download <run> -n <report-name>` into a scratch folder, and read the SARIF (`ruleId`, `artifactLocation.uri`, `region.startLine`, `partialFingerprints.commitSha`).
+   - Build each entry (`<sha>:<path>:<rule>:<line>`) from those fields, never from a SHA typed by hand: an abbreviated SHA expanded from memory looks right and silently matches nothing. Check with `git rev-parse <short>` that it's the full SHA.
 
 ## 9. Merge and close out (only when the operator says)
 
 1. **Check the head before merging.** Someone else may have pushed (for example the approver adding a fix). Read the new commits and the review that approved them; merging an unread head is not merging what was reviewed.
 2. **Merge pinned to that head:** `gh pr merge <n> --squash --match-head-commit <sha>`. Then confirm `state=MERGED` and the merge commit.
+   - **Stacked PRs** (a child PR based on its parent's branch): merge the parent first, then retarget the child (`gh pr edit <child> --base main`). After a **squash** merge the child conflicts, because main has the parent as one new commit while the child carries the parent's original commits.
+   - Resolve it by merging `origin/main` into the child. For each conflicted file, check whether main's copy is exactly the parent's final copy (`git diff --quiet origin/main origin/<parent-branch> -- <file>`). Where it is, the child's side is the parent plus the child's own changes, so take it (`git checkout --ours <file>`). Where it isn't, someone else changed main: resolve by hand. Rerun the type check and the affected tests, push, and confirm `git diff --stat origin/main HEAD` now shows only the child's changes.
+   - Retargeting can clear the child's approval on GitHub. Check `reviewDecision` and the merge state again after CI, and if the repo needs a fresh approval, ask rather than work around it.
 3. **Move the ticket only after the merge is confirmed**, to the state the operator uses (e.g. "Ready for Testing").
 4. **Clean up** as in the herdr skill: check panes, worktrees and local branches, then remove them. Keep evidence branches that PR descriptions link to.

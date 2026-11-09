@@ -29,6 +29,8 @@ If the user wants you to **post** the review as GitHub PR comments, say so and u
 - **Logic**: Do the changes do what the PR description says? Are edge cases handled (nil, empty, invalid input)?
 - **API contract**: Do the API (OpenAPI) and implementation match? Are error messages and status codes consistent?
 - **Invariants**: Are there any obvious invariants or preconditions that could be violated (e.g. "exactly one of A or B" actually enforced in code and tests)?
+- **Failure modes of guards**: For each check that disables or hides an action, ask what it protects and what happens when the data it reads fails to load. A convenience guard (e.g. "don't propose a duplicate", which the server doesn't enforce anyway) should fail **open**: show the error with a retry and keep the action usable. A guard that protects safety or authorization should fail **closed**. A whole-page error that also removes the controls is a loss of capability, often at exactly the moment the action is needed.
+- **Moved code**: When logic is extracted into a shared module, compare it line by line with the original (`git show origin/main:<file>`): same checks, same order, same messages, same state resets. List every behaviour change it causes for the original caller, even small ones, and check the PR says so.
 
 ### 2.2 Idiomatic style and structure
 
