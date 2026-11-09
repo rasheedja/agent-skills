@@ -65,7 +65,7 @@ When in doubt, prefer **not** implementing optional or “consider” items unle
 
 When spawning the review subagent, include:
 
-- **Paths:** The spec and code paths to review (e.g. `rewards-engine/spec/PP12PB-600-*.md`, `rewards-engine/internal/owner_resolution/`, …).
+- **Paths:** The spec and code paths to review (e.g. `rewards-engine/spec/KEY-600-*.md`, `rewards-engine/internal/owner_resolution/`, …).
 - **Criteria:** What to check (e.g. completeness, correctness, spec/code alignment, edge cases).
 - **Output:** Ask for a concise report and a list of actionable recommendations (with file/location and suggested change or “no change”).
 - **Commit style (if the subagent might edit):** Reference **[commits-and-pre-commit-checks](../commits-and-pre-commit-checks/SKILL.md)** and **[jujutsu](../jujutsu/SKILL.md)** so any edits use conventional commits and small logical commits. If the main agent will do all edits, you can omit this.

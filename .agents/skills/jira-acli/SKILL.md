@@ -114,8 +114,8 @@ acli jira workitem view <KEY> [options]
 **Examples:**
 
 ```bash
-acli jira workitem view PP12PB-599
-acli jira workitem view PP12PB-599 --fields "key,summary,status,updated,comment" --json
+acli jira workitem view KEY-599
+acli jira workitem view KEY-599 --fields "key,summary,status,updated,comment" --json
 ```
 
 - To inspect **comments** or **updated** time, include `comment` and `updated` in `--fields`.
@@ -179,7 +179,7 @@ acli jira workitem create --project <PROJECT_KEY> --type <Epic|Story|Task|Bug> -
 
 | Flag | Description |
 |------|-------------|
-| `--project` | Project key (e.g. `PP12PB`). Required. |
+| `--project` | Project key (e.g. `KEY`). Required. |
 | `--type` | Issue type: `Epic`, `Story`, `Task`, `Bug`, etc. |
 | `--summary` | Short title. |
 | `--description` | Body text (plain or ADF). |
@@ -193,13 +193,13 @@ acli jira workitem create --project <PROJECT_KEY> --type <Epic|Story|Task|Bug> -
 
 ```bash
 # Epic (no parent)
-acli jira workitem create --project PP12PB --type Epic --summary "My Epic" --description-file desc.txt --json
+acli jira workitem create --project KEY --type Epic --summary "My Epic" --description-file desc.txt --json
 
 # Story under an Epic
-acli jira workitem create --project PP12PB --type Story --parent PP12PB-749 --summary "My Story" --description "Details."
+acli jira workitem create --project KEY --type Story --parent KEY-749 --summary "My Story" --description "Details."
 
 # Task under Epic (some projects allow Task only under Epic, not under Story)
-acli jira workitem create --project PP12PB --type Task --parent PP12PB-749 --summary "My Task"
+acli jira workitem create --project KEY --type Task --parent KEY-749 --summary "My Task"
 ```
 
 - Use `acli jira project list --limit 100` to find project keys. Not all projects allow Tasks as children of Stories.
@@ -224,10 +224,10 @@ acli jira workitem link create --out <blocked_key> --in <blocker_key> --type Blo
 
 ```bash
 # Task T blocks Story S
-acli jira workitem link create --out PP12PB-750 --in PP12PB-756 --type Blocks --yes
+acli jira workitem link create --out KEY-750 --in KEY-756 --type Blocks --yes
 
 # Story 1 blocks Story 2
-acli jira workitem link create --out PP12PB-751 --in PP12PB-750 --type Blocks --yes
+acli jira workitem link create --out KEY-751 --in KEY-750 --type Blocks --yes
 ```
 
 **Verify:** After creating a link, open both issues in the Jira UI and confirm the "Blocks" / "is blocked by" text matches intent. If it is reversed, delete the link and recreate with `--out` and `--in` swapped.

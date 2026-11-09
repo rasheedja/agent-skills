@@ -19,7 +19,7 @@ For **commit message format** (conventional commits, body with bullets) and **ru
 
 - **Working copy** — The current change you’re editing; shown as `@` in `jj log`.
 - **Parent** — The change that your current change is based on; often written as `@-` (e.g. “parent of @”).
-- **Bookmark** — A named reference (e.g. a branch name like `rasheedja/PP12PB-599/store-hashmap-owners`) that points at a specific change. Use **`jj bookmark`** (not `jj book`).
+- **Bookmark** — A named reference (e.g. a branch name like `rasheedja/KEY-599/store-hashmap-owners`) that points at a specific change. Use **`jj bookmark`** (not `jj book`).
 - **Commit / change** — In jj, each “change” has an id; when you push, it corresponds to a git commit. The **commit_id** from jj is the git commit hash (40-char hex) once exported.
 
 **Bookmark / branch naming — the repo's own convention always wins.**
@@ -27,12 +27,11 @@ For **commit message format** (conventional commits, body with bullets) and **ru
 Before naming a branch or bookmark, check the repo's stated convention first: its `CLAUDE.md` / `AGENTS.md` / `CONTRIBUTING`, or an explicit user instruction. If the repo defines a pattern, **use it** — a repo-stated convention takes precedence over the personal default below. Known examples:
 
 - **agent-skills** requires the `agent-skills/...` prefix (per its `AGENTS.md`).
-- **realfi** requires `feature/<jira-ticket>-<name>` for engineering branches (per its `CLAUDE.md`).
 
 Only when the repo states no convention, fall back to the personal default:
 
-- **With a ticket:** `rasheedja/<ticket-key>/<short-kebab-description>` — e.g. `rasheedja/PP12PB-636/load-s3-supply-data-to-snowflake`
-- **Without a ticket:** `rasheedja/<short-kebab-description>` — e.g. `rasheedja/realfi-preprod-supply-events-raw`
+- **With a ticket:** `rasheedja/<ticket-key>/<short-kebab-description>` — e.g. `rasheedja/KEY-123/load-events-into-warehouse`
+- **Without a ticket:** `rasheedja/<short-kebab-description>` — e.g. `rasheedja/fix-flaky-login-test`
 
 Use the real tracker key for `<ticket-key>`.
 
@@ -70,7 +69,7 @@ jj bookmark list
 **Example output:**
 ```
 main: poytkyww a3f6d3dd fix: separate env keys...
-rasheedja/PP12PB-599/store-hashmap-owners: mtuktqyt f11176e0 docs: align plan to owner_value...
+rasheedja/KEY-599/store-hashmap-owners: mtuktqyt f11176e0 docs: align plan to owner_value...
 ```
 
 ---
@@ -81,13 +80,13 @@ rasheedja/PP12PB-599/store-hashmap-owners: mtuktqyt f11176e0 docs: align plan to
 jj new <PARENT> -m "descriptive message"
 ```
 
-- `<PARENT>` is a revset: usually `@` (current change) when you’re already on the branch tip, or the **bookmark name** (e.g. `rasheedja/PP12PB-599/store-hashmap-owners`) to branch from the current branch tip. Using the bookmark ensures you’re on top of the latest pushed commit.
+- `<PARENT>` is a revset: usually `@` (current change) when you’re already on the branch tip, or the **bookmark name** (e.g. `rasheedja/KEY-599/store-hashmap-owners`) to branch from the current branch tip. Using the bookmark ensures you’re on top of the latest pushed commit.
 - Creates a new empty change with the given message; the working copy moves to it (`@` is now this new change).
 - Then **edit files** in the working copy; the change will contain those edits.
 
 **Example:**
 ```bash
-jj new rasheedja/PP12PB-599/store-hashmap-owners -m "fix: restrict owner_map env_prefixes to ONCHAIN_EVENTS_OWNER_MAP only"
+jj new rasheedja/KEY-599/store-hashmap-owners -m "fix: restrict owner_map env_prefixes to ONCHAIN_EVENTS_OWNER_MAP only"
 # then edit files; @ now has your edits
 ```
 
@@ -101,7 +100,7 @@ After you’ve made the edit and want this change to be the new branch tip:
 jj bookmark set <BOOKMARK_NAME> -r @
 ```
 
-- `<BOOKMARK_NAME>` is the branch name (e.g. `rasheedja/PP12PB-599/store-hashmap-owners`).
+- `<BOOKMARK_NAME>` is the branch name (e.g. `rasheedja/KEY-599/store-hashmap-owners`).
 - `-r @` means “point the bookmark at the current change.”
 - Result: the branch now points at your new commit so the next push will update the remote branch.
 
@@ -208,7 +207,7 @@ When you have a single change that you want to turn into **several conventional 
 
 - `@` — current working copy change  
 - `@-` — parent of `@`  
-- `<bookmark_name>` — the change the bookmark points at (e.g. `rasheedja/PP12PB-599/store-hashmap-owners`)  
+- `<bookmark_name>` — the change the bookmark points at (e.g. `rasheedja/KEY-599/store-hashmap-owners`)  
 - `jj log -n 5` or `jj log --limit 5` — show last 5 changes (graph). Do **not** use git-style `-l`; `jj log` has no `-l` (use `-n` / `--limit`).
 
 ---

@@ -7,7 +7,7 @@ description: "Take a Jira ticket through investigation, planning, delegated impl
 
 Use this skill for “Jira to PR review”, “Jira GitHub to PR review”, or “jira-to-pr-review”: take a Jira ticket through investigation, a remediation plan, delegated implementation, orchestrator review, corrections, verification, and a draft PR. The ticket key or URL and the implementor selection are enough; the user need not repeat the workflow.
 
-Example: **“Use $jira-to-pr-review for WTB-2274 with you as the orchestrator and Luna High as the implementor.”** The roles are configurable; this example does not establish a default model.
+Example: **“Use $jira-to-pr-review for KEY-123 with you as the orchestrator and Luna High as the implementor.”** The roles are configurable; this example does not establish a default model.
 
 For direct implementation without a separate implementor, use [jira-story-to-pr-workflow](../jira-story-to-pr-workflow/SKILL.md). This workflow does not use the reverse arrangement in which a subagent reviews and the main agent makes the fixes.
 
