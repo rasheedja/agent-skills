@@ -92,6 +92,7 @@ press a letter, then again to confirm
 
 - `herdr_agent get` gives the lifecycle state (working, done, idle, blocked). `read` with `lines: 30–40` shows the tail.
 - Never accept a report as proof. Read the diff, rerun the decisive checks, and open the images it claims to have checked.
+- **Keep the implementor's pane until the reviewer approves.** Opening the PR is not the end of its work: a fix round sent to the same agent starts with everything it learned about the code. Close it only after the final review (or when it has filled its context). If you do close it early, the fix brief must point the new agent at the original brief, the previous report and the review, in that order.
 
 ## 7. Clean up
 

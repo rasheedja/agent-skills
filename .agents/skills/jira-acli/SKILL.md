@@ -114,8 +114,8 @@ acli jira workitem view <KEY> [options]
 **Examples:**
 
 ```bash
-acli jira workitem view PP12PB-599
-acli jira workitem view PP12PB-599 --fields "key,summary,status,updated,comment" --json
+acli jira workitem view KEY-599
+acli jira workitem view KEY-599 --fields "key,summary,status,updated,comment" --json
 ```
 
 - To inspect **comments** or **updated** time, include `comment` and `updated` in `--fields`.
@@ -133,7 +133,7 @@ acli jira workitem comment delete --help
 ```
 
 - **Rich comments:** write ADF JSON (a `{"type":"doc","version":1,"content":[…]}` with `paragraph`, `bulletList`/`listItem`, `rule`, and `text` nodes carrying `marks` such as `strong`, `em` or `link`) to a file, and pass `--body-file`. Build it with a short script rather than by hand. The tool reports `✓ Comment on work item <KEY> has been successfully added`.
-- **acli cannot upload attachments** (`attachment` only has `list` and `delete`), and there is no flag to mention a user. For a comment with images or `@mentions`, upload through the operator's logged-in browser, then post wiki markup through the REST API from that page: `!file.png|width=900!` for images, `[~accountid:<id>]` for mentions, `h3.` headings, `*bold*`, `#` numbered lists. `PUT /rest/api/2/issue/<KEY>/comment/<id>` edits a comment. See [chrome-devtools-browser-driving](../chrome-devtools-browser-driving/SKILL.md) §6–7. Find account IDs in `workitem view <KEY> --json` (`fields.reporter.accountId`, `fields.assignee.accountId`).
+- **acli cannot upload attachments** (`attachment` only has `list` and `delete`), and there is no flag to mention a user. For a comment with images or `@mentions`, upload through the operator's logged-in browser, then post wiki markup through the REST API from that page: `!file.png|width=900!` for images, `[~accountid:<id>]` for mentions, `h3.` headings, `*bold*`, `#` numbered lists. `PUT /rest/api/2/issue/<KEY>/comment/<id>` edits a comment. See [chrome-devtools-browser-driving](../chrome-devtools-browser-driving/SKILL.md) §7–8. Find account IDs in `workitem view <KEY> --json` (`fields.reporter.accountId`, `fields.assignee.accountId`).
 - **Reading tickets for an agent:** `acli jira workitem view <KEY> --fields summary,status,assignee,reporter,priority,parent,issuelinks,description,comment,attachment --json`. Then flatten the ADF to text with a small script that marks images as `[IMAGE <alt>]`, so you know which screenshots to fetch.
 
 - **List comments:** Use when you need to see who commented and when (e.g. to find "comments I added today"). The search API does not filter by "commented by currentUser()" in standard JQL, so listing comments per issue is the way to attribute them.
@@ -179,7 +179,7 @@ acli jira workitem create --project <PROJECT_KEY> --type <Epic|Story|Task|Bug> -
 
 | Flag | Description |
 |------|-------------|
-| `--project` | Project key (e.g. `PP12PB`). Required. |
+| `--project` | Project key (e.g. `KEY`). Required. |
 | `--type` | Issue type: `Epic`, `Story`, `Task`, `Bug`, etc. |
 | `--summary` | Short title. |
 | `--description` | Body text (plain or ADF). |
@@ -193,13 +193,13 @@ acli jira workitem create --project <PROJECT_KEY> --type <Epic|Story|Task|Bug> -
 
 ```bash
 # Epic (no parent)
-acli jira workitem create --project PP12PB --type Epic --summary "My Epic" --description-file desc.txt --json
+acli jira workitem create --project KEY --type Epic --summary "My Epic" --description-file desc.txt --json
 
 # Story under an Epic
-acli jira workitem create --project PP12PB --type Story --parent PP12PB-749 --summary "My Story" --description "Details."
+acli jira workitem create --project KEY --type Story --parent KEY-749 --summary "My Story" --description "Details."
 
 # Task under Epic (some projects allow Task only under Epic, not under Story)
-acli jira workitem create --project PP12PB --type Task --parent PP12PB-749 --summary "My Task"
+acli jira workitem create --project KEY --type Task --parent KEY-749 --summary "My Task"
 ```
 
 - Use `acli jira project list --limit 100` to find project keys. Not all projects allow Tasks as children of Stories.
@@ -224,10 +224,10 @@ acli jira workitem link create --out <blocked_key> --in <blocker_key> --type Blo
 
 ```bash
 # Task T blocks Story S
-acli jira workitem link create --out PP12PB-750 --in PP12PB-756 --type Blocks --yes
+acli jira workitem link create --out KEY-750 --in KEY-756 --type Blocks --yes
 
 # Story 1 blocks Story 2
-acli jira workitem link create --out PP12PB-751 --in PP12PB-750 --type Blocks --yes
+acli jira workitem link create --out KEY-751 --in KEY-750 --type Blocks --yes
 ```
 
 **Verify:** After creating a link, open both issues in the Jira UI and confirm the "Blocks" / "is blocked by" text matches intent. If it is reversed, delete the link and recreate with `--out` and `--in` swapped.

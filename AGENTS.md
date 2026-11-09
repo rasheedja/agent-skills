@@ -16,7 +16,7 @@ When a task could benefit from a skill (e.g. GitHub PRs, Jira, jujutsu, code rev
 
 - Canonical skills live in **`.agents/skills/<name>/SKILL.md`**, a repository discovery location. Each has YAML `name` and `description` metadata; the directory and name must match.
 - List them with `rg --files --hidden .agents/skills -g SKILL.md`. Scan metadata descriptions to choose a skill, then read only the relevant instructions and references.
-- Invoke a loaded skill by name, for example: **“Use $jira-to-pr-review for WTB-2274 with you as the orchestrator and Luna High as the implementor.”** Available models and reasoning settings depend on the host runtime.
+- Invoke a loaded skill by name, for example: **“Use $jira-to-pr-review for KEY-123 with you as the orchestrator and Luna High as the implementor.”** Available models and reasoning settings depend on the host runtime.
 - Root-level `skill-*.md` files are compatibility pointers for saved links. Edit the canonical files rather than duplicating instructions in the pointers.
 - Repository discovery applies when working in this repository. For use in unrelated projects, install the desired skill directories and their referenced sibling skills in the runtime's user skill directory. This layout change does not install or reload skills globally.
 

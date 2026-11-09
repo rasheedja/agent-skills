@@ -151,7 +151,7 @@ git branch -D pr-<N>
 ```
 
 - `--force` is safe for throwaway review worktrees (even ones where you ran `bun install` / downloaded browsers).
-- Remove **only your review worktrees** — leave the user's feature (`WTB-*`, `feature/*`) and Cursor/agent worktrees untouched (`git worktree list` to confirm).
+- Remove **only your review worktrees** — leave the user's feature (`KEY-*`, `feature/*`) and Cursor/agent worktrees untouched (`git worktree list` to confirm).
 - `/tmp` scratch (payload/body files) is harmless to leave.
 
 ---

@@ -15,7 +15,7 @@ For an orchestrator that reviews a separately selected implementor's work, use [
 
 ## 1. Read the story from Jira
 
-- **Get the story key** from the user (e.g. `PP12PB-599`) or from a board/search.
+- **Get the story key** from the user (e.g. `KEY-599`) or from a board/search.
 - **Fetch full details** so you can evaluate and implement:
 
 ```bash
@@ -80,7 +80,7 @@ cd ../<REPO>-<STORY_KEY>
 
 Otherwise work in the existing clone and create the branch there.
 
-- **Branch (git)** or **bookmark (jj)** name — **the repo's own convention takes precedence** (its `CLAUDE.md` / `AGENTS.md`, or a user instruction; e.g. realfi uses `feature/<jira-ticket>-<name>`). See **[jujutsu](../jujutsu/SKILL.md)**. Only when the repo states none, use the personal default:
+- **Branch (git)** or **bookmark (jj)** name — **the repo's own convention takes precedence** (its `CLAUDE.md` / `AGENTS.md`, or a user instruction; e.g. a repo may require `feature/<ticket>-<name>`). See **[jujutsu](../jujutsu/SKILL.md)**. Only when the repo states none, use the personal default:
 
   **`rasheedja/$STORY_KEY/short-description`**
 
@@ -152,12 +152,12 @@ See **[jujutsu](../jujutsu/SKILL.md)** for the full sequence (e.g. creating the 
 
   ```bash
   gh pr create --draft \
-    --title "feat(rewards): support owner hashes for points (PP12PB-600)" \
+    --title "feat(rewards): support owner hashes for points (KEY-600)" \
     --body "## Summary
 
   - **Owner resolution:** ...
   - **Tests:** ...
-  - Fixes PP12PB-600"
+  - Fixes KEY-600"
   ```
 
   If the repo is not the current `gh` default, add `--repo <OWNER/REPO>`.

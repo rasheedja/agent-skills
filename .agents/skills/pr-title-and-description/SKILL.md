@@ -40,10 +40,10 @@ From this you can identify: new vs modified vs removed files, main themes (e.g. 
 
 ## 2. Choose a conventional-commit style title
 
-- **Format:** `type(scope): short description` (e.g. `feat(rewards-engine): support owner hashes for points (PP12PB-600)`).
+- **Format:** `type(scope): short description` (e.g. `feat(rewards-engine): support owner hashes for points (KEY-600)`).
 - **Type:** Prefer `feat` for new behaviour, `fix` for bug fixes, `refactor` for structural changes, `chore` for tooling/docs/tidy, `docs` for documentation-only.
 - **Scope:** Optional; use the main area (repo name, package, or feature) if it helps.
-- **Description:** One short line (≈50–72 chars); no period at the end. Include ticket/issue id if the team uses them (e.g. `PP12PB-600`).
+- **Description:** One short line (≈50–72 chars); no period at the end. Include ticket/issue id if the team uses them (e.g. `KEY-600`).
 - Derive the title from the **overall change**, not every single commit. If the PR is one cohesive feature, one `feat(...)` title is usually enough.
 
 ---

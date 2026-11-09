@@ -20,7 +20,7 @@ gh pr view <PR_NUMBER> --repo <OWNER/REPO> --comments
 - Shows PR title, body, and a summary of review activity (e.g. “Reviewed changes”, “X comments”).
 - Does **not** list individual review comment bodies or thread IDs.
 
-**Example:** `gh pr view 29 --repo realfi-co/dagster-orchestration --comments`
+**Example:** `gh pr view 29 --repo my-org/my-repo --comments`
 
 ---
 
@@ -41,7 +41,7 @@ gh api repos/<OWNER>/<REPO>/pulls/<PR_NUMBER>/comments
 gh api repos/<OWNER>/<REPO>/pulls/<PR_NUMBER>/comments --jq '.[] | {id, body: .body[0:120], user: .user.login, path}'
 ```
 
-**Example:** `gh api repos/realfi-co/dagster-orchestration/pulls/29/comments`
+**Example:** `gh api repos/my-org/my-repo/pulls/29/comments`
 
 ---
 
@@ -54,7 +54,7 @@ gh api repos/<OWNER>/<REPO>/pulls/comments/<COMMENT_ID>
 - `<COMMENT_ID>` is the numeric `id` from step 2 (e.g. `2884959903`).
 - Response includes `node_id` (for GraphQL if needed), `body`, `in_reply_to_id`, `path`, `line`, etc.
 
-**Example:** `gh api repos/realfi-co/dagster-orchestration/pulls/comments/2884959903 --jq '.node_id'`
+**Example:** `gh api repos/my-org/my-repo/pulls/comments/2884959903 --jq '.node_id'`
 
 ---
 
@@ -86,7 +86,7 @@ JSON
 **Example (single-line body for simplicity):**
 
 ```bash
-gh api repos/realfi-co/dagster-orchestration/pulls/29/comments -X POST -f body="**Comment left by Cursor**\n\nDone. Refactored to use Polars map_elements..." -f in_reply_to=2884959903
+gh api repos/my-org/my-repo/pulls/29/comments -X POST -f body="**Comment left by Cursor**\n\nDone. Refactored to use Polars map_elements..." -f in_reply_to=2884959903
 ```
 
 - For long or multi-line bodies, `--input -` with a heredoc is easier than `-f body=...`.
@@ -120,7 +120,7 @@ query {
 '
 ```
 
-- Replace `<OWNER>`, `<REPO>`, `<PR_NUMBER>` (e.g. `realfi-co`, `dagster-orchestration`, `29`).
+- Replace `<OWNER>`, `<REPO>`, `<PR_NUMBER>` (e.g. `my-org`, `my-repo`, `29`).
 - Each `id` is the thread’s GraphQL node ID (e.g. `PRRT_kwDO...`). Use it to resolve that thread.
 - **Use `first: 100`, not `first: 50`.** Long-running review loops (e.g. iterating with Copilot for many rounds) accumulate dozens of mostly-resolved threads, and a `first: 50` cap silently truncates and undercounts unresolved threads — a classic "looks all clean, isn't" trap. For PRs with >100 threads, paginate with `pageInfo.hasNextPage` + `endCursor`.
 - `isResolved`: `true` = already resolved; `false` = still open. Only unresolved threads need resolving after you reply.

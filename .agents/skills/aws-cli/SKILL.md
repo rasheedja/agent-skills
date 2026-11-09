@@ -25,7 +25,7 @@ aws cloudformation describe-stack-events \
   --output table
 ```
 
-- Replace `<STACK_NAME>` (e.g. `preprod-realfi-stable`) and `<REGION>` (e.g. `us-east-2`).
+- Replace `<STACK_NAME>` (e.g. `staging-app-stack`) and `<REGION>` (e.g. `us-east-2`).
 - **Reason** is the important field: it contains the service error message (e.g. validation error, permission denied, resource limit).
 - **First row** in the table is usually the resource that failed first; later rows are often "Resource update cancelled" (cascade from the initial failure).
 
@@ -93,7 +93,7 @@ aws dynamodb describe-kinesis-streaming-destination \
   --region <REGION>
 ```
 
-- Replace `<TABLE_NAME>` (e.g. `preprod-realfi--supply-2`) and `<REGION>`.
+- Replace `<TABLE_NAME>` (e.g. `staging-app-events`) and `<REGION>`.
 - Response includes `KinesisDataStreamDestinations` with each `StreamArn` and `DestinationStatus` (e.g. ACTIVE, ENABLING, DISABLED, ENABLE_FAILED).
 
 **Disable a destination (so the stack can enable the stream defined in code):**
