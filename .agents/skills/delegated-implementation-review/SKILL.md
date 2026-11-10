@@ -60,9 +60,21 @@ Discover relevant checks from repository instructions, scripts, and CI. Run focu
 
 Resolve routine setup problems within the authorized scope (for example, dependencies, writable caches, or approved local test access). If an implementor cannot run a command, the orchestrator may run that command and return its results; that does not transfer implementation ownership. Never bypass an actual approval denial or disable required checks to manufacture success.
 
+**Run the repository's CI locally before any PR exists** (the "local CI gate"). Read the PR workflows (`.github/workflows/*`, the jobs that trigger on `pull_request`) and run their equivalents locally: lint, type checks, every unit-test entry point the CI uses (including isolated or "solo" suites), builds, bundle-size budgets, the end-to-end projects the PR jobs run (the whole project in one local run, in the background), and the secret scanner with the repository's config. Report each with real counts. A failure here costs nothing; the same failure after the PR is open costs a full CI run.
+
 Distinguish code/test failures from unavailable infrastructure, credentials, or established baseline failures. Fix regressions before delivery. A draft PR may document an unavoidable environment-related validation gap when the code review and available checks support the change; state exactly what ran, what did not, and what must be validated before merge. Stop if the missing evidence prevents a responsible assessment of the change. Follow [commits-and-pre-commit-checks](../commits-and-pre-commit-checks/SKILL.md).
 
 ## 6. Commit and deliver the draft PR
+
+**Open the PR only when the work is ready for human review.** Check what the repository's CI triggers on: where PR workflows run on `pull_request` only, pushing a branch without a PR costs no CI minutes, while every push to an open PR re-runs everything (often with a preview deploy). So:
+
+- review rounds, fix rounds and the local CI gate (section 5) all happen before the PR is opened, on local commits;
+- open the PR once, wait for its CI, and then request the human review;
+- if a known flaky job fails, re-run only that job (`gh run rerun <run> --failed`), never the whole run, and never push an empty commit to restart CI unless the provider lost the event;
+- don't open stacked PRs while either branch is still changing; keep the dependent branch local and open it after its base merges, because every merge into a stacked branch re-runs its CI;
+- batch pushes: one push per meaningful change, not one per review round.
+
+If screenshots need a running deployment, prefer running the app locally against a shared test backend; use the preview the PR deploys only when local can't reproduce the state.
 
 Once review passes, inspect the final diff and working tree. Exclude scratch plans, review reports, dependencies, and unrelated changes. Commit with the repository's conventions. Respect hooks; inspect any hook-generated changes and return product-file changes to the implementor for review and any needed corrections before publishing. Repeat verification if the changes affect its conclusions.
 
@@ -87,13 +99,14 @@ These practices held up across a run of 20+ tickets with pane-hosted implementor
   - the report must give real numbers for every check, with the type check run **last**;
   - list deviations and open concerns, and **every behaviour change outside the ticket's scope**. A report once called a shared page "unchanged" after a refactor that changed one of its messages; the reviewer caught it, the report didn't.
 - **Refactors that share code between pages: move it, don't copy it.** Say so in the brief: extract the logic into one module both callers use, keep caller-specific parts as options or slots, require the existing tests of the original caller to pass with their assertions unedited, and tell the implementor to stop and report if a clean move isn't possible rather than duplicate it. Ask the reviewer to compare the moved code line by line with `git show origin/main:<original file>`; that comparison is what finds the small regressions.
-- **A separate reviewer worktree.** Detach it at the PR head, install dependencies, and make it read-only for the reviewer. Before each re-review, move it to the new head (`git fetch && git checkout --detach origin/<branch>`).
+- **A separate reviewer worktree.** Detach it at the commit under review, install dependencies, and make it read-only for the reviewer. Before a PR exists that is a **local** commit: create it from the implementor's branch in the same repository (`git worktree add --detach <path> <branch>`), so no push is needed. Before each re-review, move it to the new commit (`git checkout --detach <branch>`, or `origin/<branch>` once pushed).
+- **Move the worktree, then prompt.** Never send the reviewer's prompt in the same parallel batch as the command that moves its worktree or writes its brief; it reads before the move lands and stops, or reviews the old commit.
 - **The first line of every review is the reviewed commit** (`git log -1 --format=%h`). Reviewers have reviewed stale heads; reject a review whose first line doesn't match the pushed head.
-- **Re-review only after the push lands.** Check `git ls-remote origin refs/heads/<branch>` matches the local head first. In the re-review prompt, name the new head, the previous head, and what the delta is meant to fix, and ask the reviewer to confirm no test was weakened.
+- **Re-review only after the new commit is in place.** Before a PR, that is the local commit; after, check `git ls-remote origin refs/heads/<branch>` matches the local head first. In the re-review prompt, name the new head, the previous head, and what the delta is meant to fix, and ask the reviewer to confirm no test was weakened.
 - **Judge each finding yourself**, including whether a fix introduces a new problem. Two examples:
   - A fix that made one of two complementary figures update live left the other frozen, so they stopped adding up.
   - A fix that hid rows "already handled elsewhere" also hid real rows whenever the data source lagged. The right test was by row id and data freshness (block or version), not by a derived status. Send corrections as numbered items with the expected behaviour and the test that proves it.
-- **Ship mechanics:** commit with the repo's hooks on. After the push, update the PR description with a **Review** section (each round: commit, verdict, findings fixed, nits left and why) and the agent sign-off footer. Mark the PR ready only when CI is green and the review has no open should-fix findings.
+- **Ship mechanics:** commit with the repo's hooks on. After the push, update the PR description with a **Review** section (each round: commit, verdict, findings fixed, nits left and why) and the agent sign-off footer. With the local gate, the PR should open with the review already done and CI as the last check; request the human review once CI is green.
 - **Watch for drift in long sessions.** Copy durable scripts out of temp folders. Don't change the operator's own checkout: read other branches with `git show origin/main:<path>` or a scratch worktree. If you do switch it by mistake, restore the original branch at once and say so.
 
 ## 8. CI failures: read the log before calling it a flake

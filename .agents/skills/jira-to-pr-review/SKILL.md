@@ -34,9 +34,9 @@ Follow [delegated-implementation-review](../delegated-implementation-review/SKIL
 1. Create a dedicated worktree from freshly fetched upstream (or the explicit parent for a stacked PR), preserving the original checkout.
 2. Plan the behavior change, compatibility, ownership, and verification before implementation. Retain the plan as scratch material outside the product commit.
 3. Delegate bounded implementation tasks to the chosen implementor. Parallelize only independent work with disjoint file ownership.
-4. Review the actual diff and verification evidence. Return actionable findings to the responsible implementor, then review the corrections. Repeat until no actionable in-scope findings remain.
-5. Run the relevant final checks, resolve fixable environment problems, and distinguish passing checks from blocked checks.
-6. Commit and push the reviewed branch; create and verify a draft PR. Do not merge or deploy as part of this skill.
+4. Review the actual diff and verification evidence on **local commits** (no PR yet). Return actionable findings to the responsible implementor, then review the corrections. Repeat until no actionable in-scope findings remain.
+5. Run the local CI gate (the repository's PR checks run locally, see [delegated-implementation-review](../delegated-implementation-review/SKILL.md) §5), resolve fixable environment problems, and distinguish passing checks from blocked checks.
+6. Only then commit and push the reviewed branch; create and verify a draft PR, wait for its CI, and report it ready for human review. Opening the PR early and pushing every review round spends CI minutes on each push. Do not merge or deploy as part of this skill.
 
 Read [commits-and-pre-commit-checks](../commits-and-pre-commit-checks/SKILL.md) for repository checks/commits and [pr-title-and-description](../pr-title-and-description/SKILL.md) for PR presentation. Load only references needed for the current step. Their general guidance does not change the role ownership defined here.
 
